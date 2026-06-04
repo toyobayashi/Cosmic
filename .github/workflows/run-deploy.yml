@@ -1,0 +1,36 @@
+# This workflow will build a Java project with Maven
+
+name: Run build
+on:
+  push:
+    branches:
+      - private-dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Build
+      run: ./mvnw -f ./pom.xml clean package -Dmaven.test.skip -T 1C
+    - name: Deploy
+      shell: bash
+      run: ./.github/scripts/deploy.sh
+    - name: Restart Service
+      run: |
+        set -euo pipefail
+
+        sudo systemctl restart cosmic
+        for _ in 1 2 3 4 5; do
+          if sudo systemctl is-active --quiet cosmic; then
+            sudo systemctl status cosmic --no-pager
+            exit 0
+          fi
+          sleep 2
+        done
+
+        sudo systemctl status cosmic --no-pager || true
+        sudo journalctl -u cosmic -n 100 --no-pager || true
+        echo "cosmic service failed to start"
+        exit 1
