@@ -199,6 +199,8 @@ server:
     HOST: 127.0.0.1                 #WAN IPv4 address
     LANHOST: 127.0.0.1              #LAN IPv4 address
     LOCALHOST: 127.0.0.1            #Loopback IPv4 address
+    LOGIN_PORT: 8484
+    CHANNEL_BASE_PORT: 7575
     GMSERVER: false
 
     #Other configuration

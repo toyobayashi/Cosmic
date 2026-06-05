@@ -47,6 +47,8 @@ public class ServerConfig {
     public String HOST;
     public String LANHOST;
     public String LOCALHOST;
+    public int LOGIN_PORT;
+    public int CHANNEL_BASE_PORT;
     public boolean GMSERVER;
 
     //Other configuration
