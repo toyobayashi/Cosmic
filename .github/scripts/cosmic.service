@@ -1,0 +1,19 @@
+[Unit]
+Description=Cosmic Server
+After=network.target
+
+Wants=mysql.service
+After=mysql.service
+
+[Service]
+WorkingDirectory=/home/ubuntu/app/Cosmic
+
+ExecStart=/usr/bin/java -Xmx2048m -Dwz-path=wz -jar ./target/Cosmic.jar
+
+User=ubuntu
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
