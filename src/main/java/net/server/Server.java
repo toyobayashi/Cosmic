@@ -1002,6 +1002,11 @@ public class Server {
     }
 
     public static void main(String[] args) {
+        if (args.length > 0) {
+            config.YamlConfig.setConfigFileName(args[0]);
+        }
+        config.YamlConfig.load();
+
         System.setProperty("polyglot.engine.WarnInterpreterOnly", "false"); // Mute GraalVM warning: "The polyglot context is using an implementation that does not support runtime compilation."
         Server.getInstance().init();
     }

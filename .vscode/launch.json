@@ -1,0 +1,244 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Server",
+      "request": "launch",
+      "mainClass": "net.server.Server",
+      "projectName": "Cosmic",
+      "args": "local-config.yaml"
+    },
+    {
+      "type": "java",
+      "name": "ArrowFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.ArrowFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "BossHpBarFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.BossHpBarFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "CashCosmeticsChecker",
+      "request": "launch",
+      "mainClass": "tools.mapletools.CashCosmeticsChecker",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "CashCosmeticsFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.CashCosmeticsFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "CashDropFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.CashDropFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "CashVegaChecker",
+      "request": "launch",
+      "mainClass": "tools.mapletools.CashVegaChecker",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "CodeCouponGenerator",
+      "request": "launch",
+      "mainClass": "tools.mapletools.CodeCouponGenerator",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "CouponInstaller",
+      "request": "launch",
+      "mainClass": "tools.mapletools.CouponInstaller",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "DojoUpdate",
+      "request": "launch",
+      "mainClass": "tools.mapletools.DojoUpdate",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "EmptyItemWzChecker",
+      "request": "launch",
+      "mainClass": "tools.mapletools.EmptyItemWzChecker",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "EquipmentOmniLeveller",
+      "request": "launch",
+      "mainClass": "tools.mapletools.EquipmentOmniLeveller",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "EventMethodFiller",
+      "request": "launch",
+      "mainClass": "tools.mapletools.EventMethodFiller",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "GachaponItemIdRetriever",
+      "request": "launch",
+      "mainClass": "tools.mapletools.GachaponItemIdRetriever",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "IdRetriever",
+      "request": "launch",
+      "mainClass": "tools.mapletools.IdRetriever",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "MapFieldLimitChecker",
+      "request": "launch",
+      "mainClass": "tools.mapletools.MapFieldLimitChecker",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "MapInfoRetriever",
+      "request": "launch",
+      "mainClass": "tools.mapletools.MapInfoRetriever",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "MesoFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.MesoFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "MobBookIndexer",
+      "request": "launch",
+      "mainClass": "tools.mapletools.MobBookIndexer",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "MobBookUpdate",
+      "request": "launch",
+      "mainClass": "tools.mapletools.MobBookUpdate",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "MonsterStatFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.MonsterStatFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "NoItemIdFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.NoItemIdFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "NoItemNameFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.NoItemNameFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "QuestItemCountFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.QuestItemCountFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "QuestItemFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.QuestItemFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "QuestMesoFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.QuestMesoFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "QuestlineFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.QuestlineFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "ReactorDropFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.ReactorDropFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "RemoveDuplicateDrops",
+      "request": "launch",
+      "mainClass": "tools.mapletools.RemoveDuplicateDrops",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "SkillMakerFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.SkillMakerFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "SkillMakerReagentIndexer",
+      "request": "launch",
+      "mainClass": "tools.mapletools.SkillMakerReagentIndexer",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "SkillbookChanceFetcher",
+      "request": "launch",
+      "mainClass": "tools.mapletools.SkillbookChanceFetcher",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "SkillbookStackUpdate",
+      "request": "launch",
+      "mainClass": "tools.mapletools.SkillbookStackUpdate",
+      "projectName": "Cosmic"
+    },
+    {
+      "type": "java",
+      "name": "WorldmapChecker",
+      "request": "launch",
+      "mainClass": "tools.mapletools.WorldmapChecker",
+      "projectName": "Cosmic"
+    }
+  ]
+}

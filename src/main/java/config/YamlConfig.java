@@ -11,11 +11,23 @@ import java.util.List;
 
 
 public class YamlConfig {
-    public static final String CONFIG_FILE_NAME = "config.yaml";
-    public static final YamlConfig config = loadConfig();
+    private static String CONFIG_FILE_NAME = "config.yaml";
+    public static YamlConfig config;
 
     public List<WorldConfig> worlds;
     public ServerConfig server;
+
+    public static String getConfigFileName() {
+        return CONFIG_FILE_NAME;
+    }
+
+    public static void setConfigFileName(String fileName) {
+        CONFIG_FILE_NAME = fileName;
+    }
+
+    public static void load() {
+        config = loadConfig();
+    }
 
     private static YamlConfig loadConfig() {
         try {
@@ -24,9 +36,9 @@ public class YamlConfig {
             reader.close();
             return config;
         } catch (FileNotFoundException e) {
-            throw new RuntimeException("Could not read config file " + YamlConfig.CONFIG_FILE_NAME + ": " + e.getMessage());
+            throw new RuntimeException("Could not read config file " + CONFIG_FILE_NAME + ": " + e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException("Could not successfully parse config file " + YamlConfig.CONFIG_FILE_NAME + ": " + e.getMessage());
+            throw new RuntimeException("Could not successfully parse config file " + CONFIG_FILE_NAME + ": " + e.getMessage());
         }
     }
 }

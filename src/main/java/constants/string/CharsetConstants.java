@@ -62,15 +62,16 @@ public class CharsetConstants {
 
     private static String loadCharsetFromConfig() {
         try {
-            YamlReader reader = new YamlReader(Files.newBufferedReader(Path.of(YamlConfig.CONFIG_FILE_NAME), StandardCharsets.US_ASCII));
+            String configFileName = YamlConfig.getConfigFileName();
+            YamlReader reader = new YamlReader(Files.newBufferedReader(Path.of(configFileName), StandardCharsets.US_ASCII));
             reader.getConfig().readConfig.setIgnoreUnknownProperties(true);
             StrippedYamlConfig charsetConfig = reader.read(StrippedYamlConfig.class);
             reader.close();
             return charsetConfig.server.CHARSET;
         } catch (FileNotFoundException e) {
-            throw new RuntimeException("Could not read config file " + YamlConfig.CONFIG_FILE_NAME + ": " + e.getMessage());
+            throw new RuntimeException("Could not read config file " + YamlConfig.getConfigFileName() + ": " + e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException("Could not successfully parse charset from config file " + YamlConfig.CONFIG_FILE_NAME + ": " + e.getMessage());
+            throw new RuntimeException("Could not successfully parse charset from config file " + YamlConfig.getConfigFileName() + ": " + e.getMessage());
         }
     }
 
