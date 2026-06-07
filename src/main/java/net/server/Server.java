@@ -427,13 +427,13 @@ public class Server {
 
         log.info("Starting world {}", i);
 
-        int exprate = YamlConfig.config.worlds.get(i).exp_rate;
-        int mesorate = YamlConfig.config.worlds.get(i).meso_rate;
-        int droprate = YamlConfig.config.worlds.get(i).drop_rate;
-        int bossdroprate = YamlConfig.config.worlds.get(i).boss_drop_rate;
-        int questrate = YamlConfig.config.worlds.get(i).quest_rate;
-        int travelrate = YamlConfig.config.worlds.get(i).travel_rate;
-        int fishingrate = YamlConfig.config.worlds.get(i).fishing_rate;
+        float exprate = YamlConfig.config.worlds.get(i).exp_rate;
+        float mesorate = YamlConfig.config.worlds.get(i).meso_rate;
+        float droprate = YamlConfig.config.worlds.get(i).drop_rate;
+        float bossdroprate = YamlConfig.config.worlds.get(i).boss_drop_rate;
+        float questrate = YamlConfig.config.worlds.get(i).quest_rate;
+        float travelrate = YamlConfig.config.worlds.get(i).travel_rate;
+        float fishingrate = YamlConfig.config.worlds.get(i).fishing_rate;
 
         int flag = YamlConfig.config.worlds.get(i).flag;
         String event_message = YamlConfig.config.worlds.get(i).event_message;

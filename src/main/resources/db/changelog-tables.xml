@@ -101,4 +101,8 @@
         <sqlFile path="db/tables/024-duey.sql"/>
     </changeSet>
 
+    <changeSet id="25" author="Toyo Li">
+        <sqlFile path="db/migrations/025-float-rates.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

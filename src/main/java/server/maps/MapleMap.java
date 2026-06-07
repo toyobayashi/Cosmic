@@ -651,7 +651,7 @@ public class MapleMap {
         }
     }
 
-    private byte dropItemsFromMonsterOnMap(List<MonsterDropEntry> dropEntry, Point pos, byte index, int chRate,
+    private byte dropItemsFromMonsterOnMap(List<MonsterDropEntry> dropEntry, Point pos, byte index, float chRate,
                                            byte droptype, int mobpos, Character chr, Monster mob, short delay) {
         if (dropEntry.isEmpty()) {
             return index;
@@ -679,7 +679,7 @@ public class MapleMap {
                         if (chr.getBuffedValue(BuffStat.MESOUP) != null) {
                             mesos = (int) (mesos * chr.getBuffedValue(BuffStat.MESOUP).doubleValue() / 100.0);
                         }
-                        mesos = mesos * chr.getMesoRate();
+                        mesos = (int) (mesos * chr.getMesoRate());
                         if (mesos <= 0) {
                             mesos = Integer.MAX_VALUE;
                         }
@@ -738,7 +738,7 @@ public class MapleMap {
 
         final byte droptype = (byte) (mob.getStats().isExplosiveReward() ? 3 : mob.getStats().isFfaLoot() ? 2 : chr.getParty() != null ? 1 : 0);
         final int mobpos = mob.getPosition().x;
-        int chRate = !mob.isBoss() ? chr.getDropRate() : chr.getBossDropRate();
+        float chRate = !mob.isBoss() ? chr.getDropRate() : chr.getBossDropRate();
         Point pos = new Point(0, mob.getPosition().y);
 
         MonsterStatusEffect stati = mob.getStati(MonsterStatus.SHOWDOWN);
@@ -747,7 +747,7 @@ public class MapleMap {
         }
 
         if (useBaseRate) {
-            chRate = 1;
+            chRate = 1.0f;
         }
 
         final MonsterInformationProvider mi = MonsterInformationProvider.getInstance();
@@ -784,7 +784,7 @@ public class MapleMap {
 
         final byte droptype = (byte) (chr.getParty() != null ? 1 : 0);
         final int mobpos = mob.getPosition().x;
-        int chRate = 1000000;   // guaranteed item drop
+        float chRate = 1000000;   // guaranteed item drop
         byte d = 1;
         Point pos = new Point(0, mob.getPosition().y);
 
@@ -3320,7 +3320,7 @@ public class MapleMap {
 
         private final byte droptype;
         private final int mobpos;
-        private final int chRate;
+        private final float chRate;
         private final Point pos;
         private final short delay;
         private final List<MonsterDropEntry> dropEntry;
@@ -3330,7 +3330,7 @@ public class MapleMap {
         private final Character chr;
         private final Monster mob;
 
-        protected MobLootEntry(byte droptype, int mobpos, int chRate, Point pos, short delay,
+        protected MobLootEntry(byte droptype, int mobpos, float chRate, Point pos, short delay,
                                List<MonsterDropEntry> dropEntry, List<MonsterDropEntry> visibleQuestEntry,
                                List<MonsterDropEntry> otherQuestEntry, List<MonsterGlobalDropEntry> globalEntry,
                                Character chr, Monster mob) {

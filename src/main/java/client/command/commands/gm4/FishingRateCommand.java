@@ -41,7 +41,7 @@ public class FishingRateCommand extends Command {
             return;
         }
 
-        int fishrate = Math.max(Integer.parseInt(params[0]), 1);
+        float fishrate = Math.max(Float.parseFloat(params[0]), 1.0f);
         c.getWorldServer().setFishingRate(fishrate);
         c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Fishing Rate has been changed to " + fishrate + "x."));
     }

@@ -41,7 +41,7 @@ public class QuestRateCommand extends Command {
             return;
         }
 
-        int questrate = Math.max(Integer.parseInt(params[0]), 1);
+        float questrate = Math.max(Float.parseFloat(params[0]), 1.0f);
         c.getWorldServer().setQuestRate(questrate);
         c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Quest Rate has been changed to " + questrate + "x."));
 

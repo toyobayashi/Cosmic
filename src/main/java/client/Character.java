@@ -222,7 +222,7 @@ public class Character extends AbstractCharacterObject {
     private int mesosTraded = 0;
     private int possibleReports = 10;
     private int ariantPoints, dojoPoints, vanquisherStage, dojoStage, dojoEnergy, vanquisherKills;
-    private int expRate = 1, mesoRate = 1, dropRate = 1, expCoupon = 1, mesoCoupon = 1, dropCoupon = 1;
+    private float expRate = 1.0f, mesoRate = 1.0f, dropRate = 1.0f, expCoupon = 1.0f, mesoCoupon = 1.0f, dropCoupon = 1.0f;
     private int omokwins, omokties, omoklosses, matchcardwins, matchcardties, matchcardlosses;
     private int owlSearch;
     private long lastfametime, lastUsedCashItem, lastExpression = 0, lastHealed, lastDeathtime, jailExpiration = -1;
@@ -4949,61 +4949,61 @@ public class Character extends AbstractCharacterObject {
         return YamlConfig.config.server.USE_ENFORCE_NOVICE_EXPRATE && isBeginnerJob() && level < 11;
     }
 
-    public int getExpRate() {
+    public float getExpRate() {
         if (hasNoviceExpRate()) {   // base exp rate 1x for early levels idea thanks to Vcoc
-            return 1;
+            return 1.0f;
         }
 
         return expRate;
     }
 
-    public int getCouponExpRate() {
+    public float getCouponExpRate() {
         return expCoupon;
     }
 
-    public int getRawExpRate() {
+    public float getRawExpRate() {
         return expRate / (expCoupon * getWorldServer().getExpRate());
     }
 
-    public int getDropRate() {
+    public float getDropRate() {
         return dropRate;
     }
 
-    public int getCouponDropRate() {
+    public float getCouponDropRate() {
         return dropCoupon;
     }
 
-    public int getRawDropRate() {
+    public float getRawDropRate() {
         return dropRate / (dropCoupon * getWorldServer().getDropRate());
     }
 
-    public int getBossDropRate() {
+    public float getBossDropRate() {
         World w = getWorldServer();
         return (dropRate / w.getDropRate()) * w.getBossDropRate();
     }
 
-    public int getMesoRate() {
+    public float getMesoRate() {
         return mesoRate;
     }
 
-    public int getCouponMesoRate() {
+    public float getCouponMesoRate() {
         return mesoCoupon;
     }
 
-    public int getRawMesoRate() {
+    public float getRawMesoRate() {
         return mesoRate / (mesoCoupon * getWorldServer().getMesoRate());
     }
 
-    public int getQuestExpRate() {
+    public float getQuestExpRate() {
         if (hasNoviceExpRate()) {
-            return 1;
+            return 1.0f;
         }
 
         World w = getWorldServer();
         return w.getExpRate() * w.getQuestRate();
     }
 
-    public int getQuestMesoRate() {
+    public float getQuestMesoRate() {
         World w = getWorldServer();
         return w.getMesoRate() * w.getQuestRate();
     }

@@ -95,13 +95,13 @@ public class Fishing {
             int rand = (int) (3.0 * Math.random());
             switch (rand) {
                 case 0:
-                    int mesoAward = (int) (1400.0 * Math.random() + 1201) * chr.getMesoRate() + (15 * chr.getLevel() / 5);
+                    int mesoAward = (int) ((int) (1400.0 * Math.random() + 1201) * chr.getMesoRate() + (15 * chr.getLevel() / 5));
                     chr.gainMeso(mesoAward, true, true, true);
 
                     rewardStr = mesoAward + " mesos.";
                     break;
                 case 1:
-                    int expAward = (int) (645.0 * Math.random() + 620.0) * chr.getExpRate() + (15 * chr.getLevel() / 4);
+                    int expAward = (int) ((int) (645.0 * Math.random() + 620.0) * chr.getExpRate() + (15 * chr.getLevel() / 4));
                     chr.gainExp(expAward, true, true);
 
                     rewardStr = expAward + " EXP.";

@@ -41,7 +41,7 @@ public class TravelRateCommand extends Command {
             return;
         }
 
-        int travelrate = Math.max(Integer.parseInt(params[0]), 1);
+        float travelrate = Math.max(Float.parseFloat(params[0]), 1.0f);
         c.getWorldServer().setTravelRate(travelrate);
         c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Travel Rate has been changed to " + travelrate + "x."));
     }

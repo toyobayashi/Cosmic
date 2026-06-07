@@ -119,13 +119,13 @@ public class World {
 
     private final int id;
     private int flag;
-    private int exprate;
-    private int droprate;
-    private int bossdroprate;
-    private int mesorate;
-    private int questrate;
-    private int travelrate;
-    private int fishingrate;
+    private float exprate;
+    private float droprate;
+    private float bossdroprate;
+    private float mesorate;
+    private float questrate;
+    private float travelrate;
+    private float fishingrate;
     private final String eventmsg;
     private final List<Channel> channels = new ArrayList<>();
     private final Map<Integer, Byte> pnpcStep = new HashMap<>();
@@ -200,7 +200,7 @@ public class World {
     private ScheduledFuture<?> timeoutSchedule;
     private ScheduledFuture<?> hpDecSchedule;
 
-    public World(int world, int flag, String eventmsg, int exprate, int droprate, int bossdroprate, int mesorate, int questrate, int travelrate, int fishingrate) {
+    public World(int world, int flag, String eventmsg, float exprate, float droprate, float bossdroprate, float mesorate, float questrate, float travelrate, float fishingrate) {
         this.id = world;
         this.flag = flag;
         this.eventmsg = eventmsg;
@@ -356,11 +356,11 @@ public class World {
         return eventmsg;
     }
 
-    public int getExpRate() {
+    public float getExpRate() {
         return exprate;
     }
 
-    public void setExpRate(int exp) {
+    public void setExpRate(float exp) {
         Collection<Character> list = getPlayerStorage().getAllCharacters();
 
         for (Character chr : list) {
@@ -378,11 +378,11 @@ public class World {
         }
     }
 
-    public int getDropRate() {
+    public float getDropRate() {
         return droprate;
     }
 
-    public void setDropRate(int drop) {
+    public void setDropRate(float drop) {
         Collection<Character> list = getPlayerStorage().getAllCharacters();
 
         for (Character chr : list) {
@@ -400,19 +400,19 @@ public class World {
         }
     }
 
-    public int getBossDropRate() {  // boss rate concept thanks to Lapeiro
+    public float getBossDropRate() {  // boss rate concept thanks to Lapeiro
         return bossdroprate;
     }
 
-    public void setBossDropRate(int bossdrop) {
+    public void setBossDropRate(float bossdrop) {
         bossdroprate = bossdrop;
     }
 
-    public int getMesoRate() {
+    public float getMesoRate() {
         return mesorate;
     }
 
-    public void setMesoRate(int meso) {
+    public void setMesoRate(float meso) {
         Collection<Character> list = getPlayerStorage().getAllCharacters();
 
         for (Character chr : list) {
@@ -430,19 +430,19 @@ public class World {
         }
     }
 
-    public int getQuestRate() {
+    public float getQuestRate() {
         return questrate;
     }
 
-    public void setQuestRate(int quest) {
+    public void setQuestRate(float quest) {
         this.questrate = quest;
     }
 
-    public int getTravelRate() {
+    public float getTravelRate() {
         return travelrate;
     }
 
-    public void setTravelRate(int travel) {
+    public void setTravelRate(float travel) {
         this.travelrate = travel;
     }
 
@@ -450,11 +450,11 @@ public class World {
         return (int) Math.ceil((double) travelTime / travelrate);
     }
 
-    public int getFishingRate() {
+    public float getFishingRate() {
         return fishingrate;
     }
 
-    public void setFishingRate(int quest) {
+    public void setFishingRate(float quest) {
         this.fishingrate = quest;
     }
 

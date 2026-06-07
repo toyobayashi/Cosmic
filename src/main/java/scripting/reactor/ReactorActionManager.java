@@ -170,7 +170,7 @@ public class ReactorActionManager extends AbstractPlayerInteraction {
                 if (d.itemId == 0) {
                     int range = maxMeso - minMeso;
                     int displayDrop = (int) (Math.random() * range) + minMeso;
-                    int mesoDrop = (displayDrop * c.getWorldServer().getMesoRate());
+                    int mesoDrop = (int) (displayDrop * c.getWorldServer().getMesoRate());
                     reactor.getMap().spawnMesoDrop(mesoDrop, reactor.getMap().calcDropPos(dropPos,
                             reactor.getPosition()), reactor, c.getPlayer(), false, (byte) 2, (short) 0);
                 } else {
@@ -186,7 +186,7 @@ public class ReactorActionManager extends AbstractPlayerInteraction {
                 }
             }
         } else {
-            final int worldMesoRate = c.getWorldServer().getMesoRate();
+            final float worldMesoRate = c.getWorldServer().getMesoRate();
 
             dropPos.x -= (12 * items.size());
             short delay = 0;
@@ -194,7 +194,7 @@ public class ReactorActionManager extends AbstractPlayerInteraction {
                 if (d.itemId == 0) {
                     int range = maxMeso - minMeso;
                     int displayDrop = (int) (Math.random() * range) + minMeso;
-                    int mesoDrop = displayDrop * worldMesoRate;
+                    int mesoDrop = (int) (displayDrop * worldMesoRate);
                     MapleMap map = reactor.getMap();
                     map.spawnMesoDrop(mesoDrop, map.calcDropPos(dropPos, reactor.getPosition()), reactor, chr,
                             false, (byte) 2, delay);
@@ -220,7 +220,7 @@ public class ReactorActionManager extends AbstractPlayerInteraction {
         return ReactorScriptManager.getInstance().getDrops(reactor.getId());
     }
 
-    private List<ReactorDropEntry> generateDropList(List<ReactorDropEntry> drops, int dropRate, boolean meso, int mesoChance, int minItems) {
+    private List<ReactorDropEntry> generateDropList(List<ReactorDropEntry> drops, float dropRate, boolean meso, int mesoChance, int minItems) {
         List<ReactorDropEntry> items = new ArrayList<>();
         if (meso && Math.random() < (1 / (double) mesoChance)) {
             items.add(new ReactorDropEntry(0, mesoChance, -1));

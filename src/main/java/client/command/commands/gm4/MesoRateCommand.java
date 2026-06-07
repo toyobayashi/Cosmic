@@ -41,7 +41,7 @@ public class MesoRateCommand extends Command {
             return;
         }
 
-        int mesorate = Math.max(Integer.parseInt(params[0]), 1);
+        float mesorate = Math.max(Float.parseFloat(params[0]), 1.0f);
         c.getWorldServer().setMesoRate(mesorate);
         c.getWorldServer().broadcastPacket(PacketCreator.serverNotice(6, "[Rate] Meso Rate has been changed to " + mesorate + "x."));
     }
