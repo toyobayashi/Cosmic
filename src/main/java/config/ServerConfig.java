@@ -145,6 +145,7 @@ public class ServerConfig {
     public float EXP_SPLIT_MVP_MOD;
     public float EXP_SPLIT_COMMON_MOD;
     public float PARTY_BONUS_EXP_RATE;
+    public boolean ALLOW_CONSECUTIVE_LEVEL_UP;
 
     //Miscellaneous Configuration
     public String TIMEZONE;

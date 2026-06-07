@@ -3157,12 +3157,27 @@ public class Character extends AbstractCharacterObject {
             if (show) {
                 announceExpGain(gain, equip, party, inChat, white);
             }
-            while (exp.get() >= ExpTable.getExpNeededForLevel(level)) {
-                levelUp(true);
-                if (level == getMaxLevel()) {
-                    setExp(0);
-                    updateSingleStat(Stat.EXP, 0);
-                    break;
+            if (YamlConfig.config.server.ALLOW_CONSECUTIVE_LEVEL_UP) {
+                while (exp.get() >= ExpTable.getExpNeededForLevel(level)) {
+                    levelUp(true);
+                    if (level == getMaxLevel()) {
+                        setExp(0);
+                        updateSingleStat(Stat.EXP, 0);
+                        break;
+                    }
+                }
+            } else {
+                if (exp.get() >= ExpTable.getExpNeededForLevel(level)) {
+                    levelUp(true);
+                    if (level == getMaxLevel()) {
+                        setExp(0);
+                        updateSingleStat(Stat.EXP, 0);
+                    } else {
+                        if (exp.get() >= ExpTable.getExpNeededForLevel(level)) {
+                            setExp(ExpTable.getExpNeededForLevel(level) - 1);
+                            updateSingleStat(Stat.EXP, exp.get());
+                        }
+                    }
                 }
             }
 

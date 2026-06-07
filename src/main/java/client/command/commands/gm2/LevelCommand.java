@@ -42,7 +42,11 @@ public class LevelCommand extends Command {
         }
 
         player.loseExp(player.getExp(), false, false);
-        player.setLevel(Math.min(Integer.parseInt(params[0]), player.getMaxClassLevel()) - 1);
+        int newLevel = Integer.parseInt(params[0]) & 0xFF;
+        if (newLevel == 0) {
+            newLevel = 1;
+        }
+        player.setLevel(Math.min(newLevel, player.getMaxClassLevel()) - 1);
 
         player.resetPlayerRates();
         if (YamlConfig.config.server.USE_ADD_RATES_BY_LEVEL) {
