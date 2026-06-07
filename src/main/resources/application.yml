@@ -1,0 +1,16 @@
+app:
+  ui: http://localhost:8787
+
+jwt:
+  secret: "81a5cd39-c4a1-f8a2-1832-a32e5d85c470"
+  duration: 1800000
+
+spring:
+  main:
+    register-shutdown-hook: false
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

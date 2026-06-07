@@ -3,6 +3,14 @@
   "configurations": [
     {
       "type": "java",
+      "name": "CosmicApiApplication",
+      "request": "launch",
+      "mainClass": "api.CosmicApiApplication",
+      "projectName": "Cosmic",
+      "args": "local-config.yaml"
+    },
+    {
+      "type": "java",
       "name": "Server",
       "request": "launch",
       "mainClass": "net.server.Server",

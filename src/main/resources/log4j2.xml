@@ -71,7 +71,7 @@
     <Loggers>
         <Root level="trace">
             <AppenderRef ref="File" level="debug"/>
-            <AppenderRef ref="Console" level="trace"/>
+            <AppenderRef ref="Console" level="info"/>
         </Root>
 
         <Logger name="net.packet.logging" level="debug" additivity="false">
@@ -100,5 +100,14 @@
 
         <Logger name="com.zaxxer.hikari" level="info"/>
         <Logger name="io.netty" level="info"/>
+
+        <Logger name="org.springframework.boot" level="warn"/>
+        <Logger name="org.springframework.web" level="warn"/>
+        <Logger name="org.springdoc" level="warn"/>
+        <Logger name="io.swagger" level="warn"/>
+        <Logger name="org.apache.catalina" level="warn"/>
+        <Logger name="org.apache.tomcat" level="warn"/>
+        <Logger name="org.apache.coyote" level="warn"/>
+        <Logger name="_org.springframework" level="warn"/>
     </Loggers>
 </Configuration>
