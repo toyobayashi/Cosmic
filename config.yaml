@@ -298,6 +298,7 @@ server:
     EXP_SPLIT_COMMON_MOD: 0.8
     PARTY_BONUS_EXP_RATE: 1.0            #Rate for the party exp bonus reward.
     ALLOW_CONSECUTIVE_LEVEL_UP: false     #Allows players to level up more than once at the same time when they gain enough experience, rather than stopping at 1 level up and waiting for the next exp gain to check for another level up.
+    USE_MODERN_EXP_TABLE: false             #Use the modern MapleStory experience table, which requires less experience to level up than the old one.
 
     #Miscellaneous Configuration
     TIMEZONE: GMT
