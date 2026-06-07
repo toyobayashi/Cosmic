@@ -201,6 +201,7 @@ server:
     LOCALHOST: 127.0.0.1            #Loopback IPv4 address
     LOGIN_PORT: 8484
     CHANNEL_BASE_PORT: 7575
+    API_PORT: 8686
     GMSERVER: false
 
     #Other configuration

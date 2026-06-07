@@ -1923,6 +1923,52 @@ public class Server {
         return () -> shutdownInternal(restart);
     }
 
+    public void stopGameServer() {
+        log.info("Stopping game server (API stays online)...");
+        if (getWorlds() == null) return;
+
+        log.info("Disconnecting all players...");
+        for (World w : getWorlds()) {
+            var chars = new ArrayList<>(w.getPlayerStorage().getAllCharacters());
+            for (var chr : chars) {
+                try {
+                    chr.getClient().closeSession();
+                } catch (Exception ignored) {}
+            }
+        }
+
+        try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+
+        for (World w : getWorlds()) {
+            w.shutdown();
+        }
+        List<Channel> allChannels = getAllChannels();
+        for (Channel ch : allChannels) {
+            int waitCount = 0;
+            while (!ch.finishedShutdown() && waitCount < 30) {
+                try { Thread.sleep(1000); } catch (InterruptedException ie) { log.error("Error during shutdown sleep", ie); }
+                waitCount++;
+            }
+            if (!ch.finishedShutdown()) {
+                log.warn("Channel in world {} did not finish shutdown within 30s, forcing continue", ch.getWorld());
+            }
+        }
+        resetServerWorlds();
+        ThreadManager.getInstance().stop();
+        TimerManager.getInstance().purge();
+        TimerManager.getInstance().stop();
+        loginServer.stop();
+        online = false;
+        log.info("Game server stopped. API remains online.");
+    }
+
+    public void restartGameServer() {
+        stopGameServer();
+        log.info("Restarting game server...");
+        try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
+        init();
+    }
+
     private synchronized void shutdownInternal(boolean restart) {
         log.info("{} the server!", restart ? "Restarting" : "Shutting down");
         if (getWorlds() == null) {

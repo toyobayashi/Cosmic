@@ -49,6 +49,7 @@ public class ServerConfig {
     public String LOCALHOST;
     public int LOGIN_PORT;
     public int CHANNEL_BASE_PORT;
+    public int API_PORT;
     public boolean GMSERVER;
 
     //Other configuration

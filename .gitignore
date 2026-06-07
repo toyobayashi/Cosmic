@@ -25,3 +25,5 @@ database/docker-pg-db-data
 # macOS files
 .DS_Store
 local-config.yaml
+node_modules
+ui/dist

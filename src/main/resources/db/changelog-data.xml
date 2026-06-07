@@ -50,5 +50,8 @@
     <changeSet id="161" author="Ponk">
         <sqlFile path="db/data/161-admin-data.sql"/>
     </changeSet>
+    <changeSet id="162" author="Toyo Li">
+        <sqlFile path="db/migrations/162-webadmin-default.sql"/>
+    </changeSet>
 
 </databaseChangeLog>
