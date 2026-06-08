@@ -14,18 +14,34 @@ import java.util.*;
 public class CharacterController {
 
     @Tag(name = "/character/" + ApiConstant.LATEST)
-    @Operation(summary = "Character list by account ID")
+    @Operation(summary = "Character list by account ID or account name (fuzzy)")
     @GetMapping("/" + ApiConstant.LATEST + "/list")
-    public ResultBody<List<Map<String, Object>>> characterList(@RequestParam int accountId) {
+    public ResultBody<List<Map<String, Object>>> characterList(
+            @RequestParam(required = false) Integer accountId,
+            @RequestParam(required = false) String accountName) {
         List<Map<String, Object>> result = new ArrayList<>();
         try (var handle = tools.DatabaseConnection.getHandle()) {
-            result = handle.createQuery(
-                    "SELECT c.id, c.name, c.level, c.job, c.world, c.gm, c.fame, c.meso, " +
-                    "c.guildid, c.createdate, c.lastLogoutTime " +
-                    "FROM characters c WHERE c.accountid = ? ORDER BY c.id")
-                    .bind(0, accountId)
-                    .mapToMap()
-                    .list();
+            if (accountName != null && !accountName.isBlank()) {
+                result = handle.createQuery(
+                        "SELECT c.id, c.name, c.level, c.job, c.world, c.gm, c.fame, c.meso, " +
+                        "c.guildid, c.createdate, c.lastLogoutTime, c.accountid, a.name AS accountName " +
+                        "FROM characters c JOIN accounts a ON c.accountid = a.id " +
+                        "WHERE a.name LIKE ? ORDER BY c.id")
+                        .bind(0, "%" + accountName.trim() + "%")
+                        .mapToMap()
+                        .list();
+            } else if (accountId != null) {
+                result = handle.createQuery(
+                        "SELECT c.id, c.name, c.level, c.job, c.world, c.gm, c.fame, c.meso, " +
+                        "c.guildid, c.createdate, c.lastLogoutTime, c.accountid, a.name AS accountName " +
+                        "FROM characters c JOIN accounts a ON c.accountid = a.id " +
+                        "WHERE c.accountid = ? ORDER BY c.id")
+                        .bind(0, accountId)
+                        .mapToMap()
+                        .list();
+            } else {
+                return ResultBody.error(400, "accountId or accountName is required");
+            }
         } catch (Exception e) {
             return ResultBody.error(500, "Failed to get character list: " + e.getMessage());
         }

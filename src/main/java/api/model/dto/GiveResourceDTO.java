@@ -7,7 +7,7 @@ public class GiveResourceDTO {
     private Boolean global;
     private Integer quantity;
     private Integer itemId;
-    private Integer rate;
+    private Float rate;
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
@@ -21,6 +21,6 @@ public class GiveResourceDTO {
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
     public Integer getItemId() { return itemId; }
     public void setItemId(Integer itemId) { this.itemId = itemId; }
-    public Integer getRate() { return rate; }
-    public void setRate(Integer rate) { this.rate = rate; }
+    public Float getRate() { return rate; }
+    public void setRate(Float rate) { this.rate = rate; }
 }

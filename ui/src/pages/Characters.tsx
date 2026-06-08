@@ -15,6 +15,8 @@ interface CharacterInfo {
   guildid: number
   createdate: string
   lastLogoutTime: string | null
+  accountid: number
+  accountName: string
 }
 
 interface OnlineChar {
@@ -52,7 +54,7 @@ function getJobName(jobId: number): string {
 
 export default function Characters() {
   const [onlineChars, setOnlineChars] = useState<OnlineChar[]>([])
-  const [searchAccountId, setSearchAccountId] = useState('')
+  const [searchText, setSearchText] = useState('')
   const [characters, setCharacters] = useState<CharacterInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [onlineLoading, setOnlineLoading] = useState(false)
@@ -70,17 +72,20 @@ export default function Characters() {
   }, [])
 
   const fetchByAccount = useCallback(async () => {
-    if (!searchAccountId) { setCharacters([]); return }
+    const trimmed = searchText.trim()
+    if (!trimmed) { setCharacters([]); return }
     setLoading(true)
     try {
-      const res = await api.get('/character/v1/list', { params: { accountId: parseInt(searchAccountId) } })
+      const isId = /^\d+$/.test(trimmed)
+      const params = isId ? { accountId: parseInt(trimmed) } : { accountName: trimmed }
+      const res = await api.get('/character/v1/list', { params })
       setCharacters(res.data.data || [])
     } catch {
       message.error('Failed to load characters')
     } finally {
       setLoading(false)
     }
-  }, [searchAccountId])
+  }, [searchText])
 
   useEffect(() => { fetchOnline() }, [fetchOnline])
 
@@ -101,6 +106,8 @@ export default function Characters() {
   const charColumns = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
     { title: 'Name', dataIndex: 'name', key: 'name' },
+    { title: 'Account ID', dataIndex: 'accountid', key: 'accountid', width: 120 },
+    { title: 'Account Name', dataIndex: 'accountname', key: 'accountname', width: 140 },
     { title: 'Level', dataIndex: 'level', key: 'level' },
     {
       title: 'Job',
@@ -139,17 +146,17 @@ export default function Characters() {
         />
       </Card>
 
-      <Card title="Search by Account ID">
+      <Card title="Search by Account">
         <Row gutter={16} className="mb-4">
           <Col>
             <Input.Search
-              placeholder="Enter account ID"
-              value={searchAccountId}
-              onChange={(e) => setSearchAccountId(e.target.value)}
+              placeholder="Account ID or name (fuzzy)"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
               onSearch={fetchByAccount}
               enterButton
               prefix={<SearchOutlined />}
-              style={{ width: 240 }}
+              style={{ width: 280 }}
             />
           </Col>
         </Row>
@@ -159,7 +166,7 @@ export default function Characters() {
           rowKey="id"
           loading={loading}
           pagination={false}
-          locale={{ emptyText: searchAccountId ? 'No characters found' : 'Enter an account ID to search' }}
+          locale={{ emptyText: searchText ? 'No characters found' : 'Enter an account ID or name to search' }}
         />
       </Card>
     </div>

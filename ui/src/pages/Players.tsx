@@ -16,7 +16,12 @@ const giveTypes = [
   { label: 'Item', value: 'item' },
   { label: 'Fame', value: 'fame' },
   { label: 'GM Level', value: 'gmLevel' },
+  { label: 'EXP Rate (World)', value: 'expRate' },
+  { label: 'Meso Rate (World)', value: 'mesoRate' },
+  { label: 'Drop Rate (World)', value: 'dropRate' },
 ]
+
+const rateTypes = ['expRate', 'mesoRate', 'dropRate']
 
 export default function Players() {
   const [onlineChars, setOnlineChars] = useState<OnlineChar[]>([])
@@ -43,7 +48,8 @@ export default function Players() {
       const payload: Record<string, unknown> = { type: giveType }
       if (giveGlobal) { payload.global = true }
       else if (selectedChar) { payload.characterId = selectedChar.id }
-      if (giveType === 'item') { payload.itemId = values.itemId; payload.quantity = values.quantity || 1 }
+      if (rateTypes.includes(giveType)) { payload.rate = values.rate }
+      else if (giveType === 'item') { payload.itemId = values.itemId; payload.quantity = values.quantity || 1 }
       else { payload.quantity = values.quantity }
       await api.post('/give/v1/resource', { data: payload })
       message.success('Resource granted')
@@ -86,9 +92,14 @@ export default function Players() {
               <InputNumber className="w-full" />
             </Form.Item>
           )}
-          {giveType && (
+          {giveType && !rateTypes.includes(giveType) && (
             <Form.Item name="quantity" label="Quantity/Value" rules={[{ required: true }]}>
               <InputNumber className="w-full" />
+            </Form.Item>
+          )}
+          {rateTypes.includes(giveType) && (
+            <Form.Item name="rate" label="Rate (World-Level)" rules={[{ required: true }]}>
+              <InputNumber className="w-full" min={0} step={0.1} placeholder="e.g. 2.0 for double" stringMode={false} />
             </Form.Item>
           )}
         </Form>

@@ -9,6 +9,9 @@ import {
   ShopOutlined,
   BugOutlined,
   GlobalOutlined,
+  FileTextOutlined,
+  SettingOutlined,
+  CodeOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -30,9 +33,13 @@ export default function AppLayout() {
     { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/accounts', icon: <UserOutlined />, label: 'Accounts' },
     { key: '/players', icon: <GiftOutlined />, label: 'Players' },
+    { key: '/characters', icon: <TeamOutlined />, label: 'Characters' },
     { key: '/npcs-shop', icon: <ShopOutlined />, label: 'NPC Shop' },
     { key: '/monster-drop', icon: <BugOutlined />, label: 'Monster Drop' },
     { key: '/global-drop', icon: <GlobalOutlined />, label: 'Global Drop' },
+    { key: '/inventory', icon: <FileTextOutlined />, label: 'Inventory' },
+    { key: '/config', icon: <SettingOutlined />, label: 'Config' },
+    { key: '/commands', icon: <CodeOutlined />, label: 'Commands' },
   ]
 
   const currentKey = location.pathname === '/' ? '/' : '/' + location.pathname.split('/')[1]

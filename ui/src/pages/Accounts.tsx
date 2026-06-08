@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Table, Button, Input, Space, Modal, Form, Tag, message, Popconfirm, Select, Row, Col, DatePicker } from 'antd'
+import { Table, Button, Input, Space, Modal, Form, Tag, message, Popconfirm, Select, Row, Col, DatePicker, Tooltip } from 'antd'
 import { PlusOutlined, SearchOutlined, ReloadOutlined, StopOutlined, CheckOutlined } from '@ant-design/icons'
 import api from '../api/client'
 import dayjs from 'dayjs'
@@ -147,7 +147,12 @@ export default function Accounts() {
       title: 'Banned',
       dataIndex: 'banned',
       key: 'banned',
-      render: (v: number) => v ? <Tag color="red">Yes</Tag> : <Tag color="green">No</Tag>,
+      width: 80,
+      render: (v: number, record: AccountInfo) => v ? (
+        <Tooltip title={record.banreason || 'No reason provided'}>
+          <Tag color="red">Yes</Tag>
+        </Tooltip>
+      ) : <Tag color="green">No</Tag>,
     },
     {
       title: 'Online',
@@ -163,6 +168,7 @@ export default function Accounts() {
     },
     { title: 'Last Login', dataIndex: 'lastlogin', key: 'lastlogin', render: (v: string | null) => v || '-' },
     { title: 'Created', dataIndex: 'createdat', key: 'createdat', render: (v: string) => v?.substring(0, 19) || '-' },
+    { title: 'Ban Reason', dataIndex: 'banreason', key: 'banreason', render: (v: string | null) => v || '-' },
     {
       title: 'Actions',
       key: 'actions',
@@ -272,6 +278,7 @@ export default function Accounts() {
             <Col span={12}><Form.Item name="banned" label="Banned"><Select allowClear><Select.Option value={0}>No</Select.Option><Select.Option value={1}>Yes</Select.Option></Select></Form.Item></Col>
             <Col span={12}><Form.Item name="webadmin" label="Web Admin"><Select allowClear><Select.Option value={0}>No</Select.Option><Select.Option value={1}>Yes</Select.Option></Select></Form.Item></Col>
           </Row>
+          <Form.Item name="banreason" label="Ban Reason"><Input.TextArea rows={2} /></Form.Item>
           <Row gutter={16}>
             <Col span={8}><Form.Item name="nxCredit" label="NX Credit"><Input type="number" /></Form.Item></Col>
             <Col span={8}><Form.Item name="maplePoint" label="Maple Points"><Input type="number" /></Form.Item></Col>
