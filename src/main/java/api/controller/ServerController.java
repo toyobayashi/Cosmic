@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/server")
+@RequestMapping("/api/server")
 public class ServerController {
 
     private static final ServerService serverService = new ServerService();

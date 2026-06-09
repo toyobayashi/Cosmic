@@ -15,10 +15,11 @@ import server.ItemInformationProvider;
 import java.util.*;
 
 @RestController
-@RequestMapping("/common")
+@RequestMapping("/api/common")
 public class CommonController {
 
     private static List<Map.Entry<Integer, String>> mobNameCache = null;
+    private static List<Map.Entry<Integer, String>> mapNameCache = null;
 
     private static synchronized List<Map.Entry<Integer, String>> getMobNameList() {
         if (mobNameCache != null) return mobNameCache;
@@ -39,6 +40,35 @@ public class CommonController {
         } catch (Exception ignored) {}
 
         mobNameCache = list;
+        return list;
+    }
+
+    private static synchronized List<Map.Entry<Integer, String>> getMapNameList() {
+        if (mapNameCache != null) return mapNameCache;
+
+        List<Map.Entry<Integer, String>> list = new ArrayList<>();
+        try {
+            DataProvider stringProvider = DataProviderFactory.getDataProvider(WZFiles.STRING);
+            Data mapData = stringProvider.getData("Map.img");
+            for (Data region : mapData.getChildren()) {
+                for (Data mapEntry : region.getChildren()) {
+                    try {
+                        int id = Integer.parseInt(mapEntry.getName());
+                        String name = DataTool.getString(mapEntry.getChildByPath("mapName"), "");
+                        String streetName = DataTool.getString(mapEntry.getChildByPath("streetName"), "");
+                        String fullName = name;
+                        if (!streetName.isEmpty()) {
+                            fullName = streetName + " : " + name;
+                        }
+                        if (!fullName.isEmpty()) {
+                            list.add(new AbstractMap.SimpleEntry<>(id, fullName));
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        } catch (Exception ignored) {}
+
+        mapNameCache = list;
         return list;
     }
 
@@ -86,6 +116,33 @@ public class CommonController {
                     results.add(mob);
                     if (results.size() >= maxResults) break;
                 }
+            }
+        }
+
+        return ResultBody.success(results);
+    }
+
+    @Tag(name = "/common/" + ApiConstant.LATEST)
+    @Operation(summary = "Search maps by name or ID (fuzzy)")
+    @GetMapping("/" + ApiConstant.LATEST + "/mapSearch")
+    public ResultBody<List<Map<String, Object>>> mapSearch(@RequestParam String keyword) {
+        List<Map<String, Object>> results = new ArrayList<>();
+        int maxResults = 50;
+        String kw = keyword.toLowerCase().trim();
+
+        if (kw.isEmpty()) {
+            return ResultBody.error(400, "keyword is required");
+        }
+
+        for (var entry : getMapNameList()) {
+            int id = entry.getKey();
+            String name = entry.getValue();
+            if (name.toLowerCase().contains(kw) || String.valueOf(id).contains(kw)) {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("id", id);
+                map.put("name", name);
+                results.add(map);
+                if (results.size() >= maxResults) break;
             }
         }
 

@@ -2,15 +2,19 @@ package api.controller;
 
 import api.constant.ApiConstant;
 import api.model.ResultBody;
+import client.Character;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.server.Server;
+import net.server.world.World;
 import org.springframework.web.bind.annotation.*;
+import server.maps.MapFactory;
+import server.maps.MapleMap;
 
 import java.util.*;
 
 @RestController
-@RequestMapping("/character")
+@RequestMapping("/api/character")
 public class CharacterController {
 
     @Tag(name = "/character/" + ApiConstant.LATEST)
@@ -57,12 +61,14 @@ public class CharacterController {
             for (var world : Server.getInstance().getWorlds()) {
                 for (var chr : world.getPlayerStorage().getAllCharacters()) {
                     Map<String, Object> map = new HashMap<>();
+                    int mapId = chr.getMapId();
                     map.put("id", chr.getId());
                     map.put("name", chr.getName());
                     map.put("level", chr.getLevel());
                     map.put("job", chr.getJob().getId());
                     map.put("world", world.getId());
-                    map.put("mapId", chr.getMapId());
+                    map.put("mapId", mapId);
+                    map.put("mapName", MapFactory.loadPlaceName(mapId));
                     result.add(map);
                 }
             }
@@ -70,5 +76,38 @@ public class CharacterController {
             return ResultBody.error(500, "Failed to get online characters: " + e.getMessage());
         }
         return ResultBody.success(result);
+    }
+
+    @Tag(name = "/character/" + ApiConstant.LATEST)
+    @Operation(summary = "Warp a character to a map")
+    @PostMapping("/" + ApiConstant.LATEST + "/warp")
+    public ResultBody<String> warpCharacter(@RequestBody Map<String, Object> body) {
+        int characterId = (int) body.get("characterId");
+        int mapId = (int) body.get("mapId");
+
+        try {
+            Character chr = null;
+            for (var world : Server.getInstance().getWorlds()) {
+                chr = world.getPlayerStorage().getCharacterById(characterId);
+                if (chr != null) {
+                    break;
+                }
+            }
+
+            if (chr == null) {
+                return ResultBody.error(404, "Character not online: " + characterId);
+            }
+
+            MapleMap target = chr.getClient().getChannelServer().getMapFactory().getMap(mapId);
+            if (target == null) {
+                return ResultBody.error(404, "Map not found: " + mapId);
+            }
+
+            chr.saveLocationOnWarp();
+            chr.changeMap(target, target.getRandomPlayerSpawnpoint());
+            return ResultBody.success("Character " + chr.getName() + " warped to map " + mapId);
+        } catch (Exception e) {
+            return ResultBody.error(500, "Failed to warp character: " + e.getMessage());
+        }
     }
 }

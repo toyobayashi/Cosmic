@@ -20,6 +20,15 @@ cp -rpf "$REPO_ROOT/tools" "$APP_DIR/tools"
 cp -rpf "$REPO_ROOT/wz" "$APP_DIR/wz"
 cp -rpf "$REPO_ROOT/config.yaml" "$APP_DIR/config.yaml"
 
+if [ -d "$REPO_ROOT/ui/dist" ]; then
+  echo "Copying UI dist files..."
+  rm -rf "$APP_DIR/ui/dist"
+  mkdir -p "$APP_DIR/ui"
+  cp -rpf "$REPO_ROOT/ui/dist" "$APP_DIR/ui/dist"
+else
+  echo "UI dist directory not found. Please build the UI first."
+fi
+
 # If a systemd service unit is provided in the repo, install/update it and reload systemd
 SERVICE_SRC="$REPO_ROOT/.github/scripts/cosmic.service"
 if [ -f "$SERVICE_SRC" ]; then

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/shop")
+@RequestMapping("/api/shop")
 public class ShopController {
 
     private static final ShopService shopService = new ShopService();

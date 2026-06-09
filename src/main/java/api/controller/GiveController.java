@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/give")
+@RequestMapping("/api/give")
 public class GiveController {
 
     private static final GiveService giveService = new GiveService();

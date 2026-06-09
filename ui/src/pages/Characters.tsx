@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Table, Button, Input, Space, Tag, message, Row, Col, Card } from 'antd'
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
+import { useState, useCallback } from 'react'
+import { Table, Input, Tag, message, Row, Col, Card } from 'antd'
+import { SearchOutlined } from '@ant-design/icons'
 import api from '../api/client'
 
 interface CharacterInfo {
@@ -17,15 +17,6 @@ interface CharacterInfo {
   lastLogoutTime: string | null
   accountid: number
   accountName: string
-}
-
-interface OnlineChar {
-  id: number
-  name: string
-  level: number
-  job: number
-  world: number
-  mapId: number
 }
 
 const jobNames: Record<number, string> = {
@@ -53,23 +44,9 @@ function getJobName(jobId: number): string {
 }
 
 export default function Characters() {
-  const [onlineChars, setOnlineChars] = useState<OnlineChar[]>([])
   const [searchText, setSearchText] = useState('')
   const [characters, setCharacters] = useState<CharacterInfo[]>([])
   const [loading, setLoading] = useState(false)
-  const [onlineLoading, setOnlineLoading] = useState(false)
-
-  const fetchOnline = useCallback(async () => {
-    setOnlineLoading(true)
-    try {
-      const res = await api.get('/character/v1/online')
-      setOnlineChars(res.data.data || [])
-    } catch {
-      message.error('Failed to load online characters')
-    } finally {
-      setOnlineLoading(false)
-    }
-  }, [])
 
   const fetchByAccount = useCallback(async () => {
     const trimmed = searchText.trim()
@@ -86,22 +63,6 @@ export default function Characters() {
       setLoading(false)
     }
   }, [searchText])
-
-  useEffect(() => { fetchOnline() }, [fetchOnline])
-
-  const onlineColumns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Level', dataIndex: 'level', key: 'level' },
-    {
-      title: 'Job',
-      dataIndex: 'job',
-      key: 'job',
-      render: (v: number) => <Tag>{getJobName(v)}</Tag>,
-    },
-    { title: 'World', dataIndex: 'world', key: 'world' },
-    { title: 'Map', dataIndex: 'mapId', key: 'mapId' },
-  ]
 
   const charColumns = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
@@ -131,20 +92,6 @@ export default function Characters() {
   return (
     <div>
       <h2 className="text-xl font-bold mb-6">Characters</h2>
-
-      <Card title="Online Characters" className="mb-6" extra={
-        <Button icon={<ReloadOutlined />} onClick={fetchOnline} size="small">Refresh</Button>
-      }>
-        <Table
-          dataSource={onlineChars}
-          columns={onlineColumns}
-          rowKey="id"
-          loading={onlineLoading}
-          pagination={false}
-          size="small"
-          locale={{ emptyText: 'No characters online' }}
-        />
-      </Card>
 
       <Card title="Search by Account">
         <Row gutter={16} className="mb-4">

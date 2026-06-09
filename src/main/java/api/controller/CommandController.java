@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/command")
+@RequestMapping("/api/command")
 public class CommandController {
 
     private static final CommandService commandService = new CommandService();

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/inventory")
+@RequestMapping("/api/inventory")
 public class InventoryController {
 
     private static final InventoryService inventoryService = new InventoryService();

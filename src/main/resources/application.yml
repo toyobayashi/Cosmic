@@ -8,6 +8,9 @@ jwt:
 spring:
   main:
     register-shutdown-hook: false
+  web:
+    resources:
+      static-locations: file:ui/dist,classpath:/static
 
 springdoc:
   api-docs:

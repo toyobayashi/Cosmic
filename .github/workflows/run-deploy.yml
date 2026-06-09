@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - private-dev
+      - ui
 
 jobs:
   build:
@@ -12,6 +13,17 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Build UI
+      run: |
+        if [ -d "ui" ]; then
+          echo "UI directory exists, building UI..."
+          cd ui
+          npm install
+          npm run build
+        else
+          echo "UI directory does not exist, skipping UI build."
+          exit 0
+        fi
     - name: Build
       run: ./mvnw -f ./pom.xml clean package -Dmaven.test.skip -T 1C
     - name: Deploy

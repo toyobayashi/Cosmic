@@ -27,3 +27,4 @@ database/docker-pg-db-data
 local-config.yaml
 node_modules
 ui/dist
+src/main/resources/static

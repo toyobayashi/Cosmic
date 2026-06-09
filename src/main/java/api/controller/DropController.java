@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/drop")
+@RequestMapping("/api/drop")
 public class DropController {
 
     private static final DropService dropService = new DropService();
