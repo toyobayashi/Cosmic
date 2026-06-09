@@ -1,5 +1,6 @@
 package scripting;
 
+import config.YamlConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -17,8 +18,9 @@ public class ScriptEvaluationTest {
     private AbstractScriptManager scriptManager = new AbstractScriptManager() {};
 
     @BeforeAll
-    static void muteGraal() {
+    static void setUp() {
         System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
+        YamlConfig.load();
     }
 
     private static List<String> eventScriptFilePaths() throws IOException {

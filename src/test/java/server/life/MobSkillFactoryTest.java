@@ -1,5 +1,7 @@
 package server.life;
 
+import config.YamlConfig;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -19,6 +21,11 @@ class MobSkillFactoryTest {
 
     @TempDir
     private Path wzPath;
+
+    @BeforeAll
+    static void loadConfig() {
+        YamlConfig.load();
+    }
 
     @BeforeEach
     void setWzPath() {

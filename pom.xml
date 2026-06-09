@@ -73,6 +73,7 @@
         <jdbi-version>3.49.5</jdbi-version> <!-- Convenience wrapper around JDBC -->
         <liquibase-core.version>4.32.0</liquibase-core.version> <!-- Database migrations -->
         <junit.version>5.13.1</junit.version> <!-- Unit test -->
+        <junit.platform.version>1.13.1</junit.platform.version> <!-- Must match junit.version minor -->
         <mockito.version>5.18.0</mockito.version> <!-- Unit test -->
     </properties>
 
@@ -121,6 +122,18 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-unix-common</artifactId>
                 <version>${netty.version}</version>
+            </dependency>
+
+            <!-- Override JUnit Platform versions managed by Spring Boot BOM -->
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-engine</artifactId>
+                <version>${junit.platform.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-commons</artifactId>
+                <version>${junit.platform.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
