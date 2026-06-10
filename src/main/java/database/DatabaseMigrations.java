@@ -51,7 +51,7 @@ public class DatabaseMigrations {
                     .findCorrectDatabaseImplementation(databaseConnection);
 
             Liquibase liquibase = new Liquibase(
-                    changelogDir.resolve("changelog-root.xml").toString(),
+                    "changelog-root.xml",
                     new DirectoryResourceAccessor(changelogDir),
                     database);
 
