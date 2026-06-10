@@ -7,16 +7,17 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.DirectoryResourceAccessor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import tools.DatabaseConnection;
 
 import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,12 +27,6 @@ import java.util.logging.Logger;
  * @author Ponk
  */
 public class DatabaseMigrations {
-
-    private static final List<String> CHANGELOG_FILES = List.of(
-            "changelog-root.xml",
-            "changelog-tables.xml",
-            "changelog-data.xml"
-    );
 
     public static void runDatabaseMigrations() {
         suppressLiquibaseLogs();
@@ -51,13 +46,13 @@ public class DatabaseMigrations {
                     .findCorrectDatabaseImplementation(databaseConnection);
 
             Liquibase liquibase = new Liquibase(
-                    "changelog-root.xml",
+                    "db/changelog-root.xml",
                     new DirectoryResourceAccessor(changelogDir),
                     database);
 
             liquibase.setShowSummaryOutput(UpdateSummaryOutputEnum.LOG);
             liquibase.update();
-        } catch (SQLException | LiquibaseException | FileNotFoundException e) {
+        } catch (SQLException | LiquibaseException | IOException e) {
             throw new RuntimeException("Failed to run database migrations", e);
         } finally {
             cleanupChangelogs(changelogDir);
@@ -67,14 +62,17 @@ public class DatabaseMigrations {
     private static Path extractChangelogs() {
         try {
             Path tempDir = Files.createTempDirectory("cosmic-changelog");
-            ClassLoader classLoader = DatabaseMigrations.class.getClassLoader();
-            for (String file : CHANGELOG_FILES) {
-                String resourcePath = "db/" + file;
-                try (InputStream is = classLoader.getResourceAsStream(resourcePath)) {
-                    if (is == null) {
-                        throw new RuntimeException("Changelog not found on classpath: " + resourcePath);
-                    }
-                    Files.copy(is, tempDir.resolve(file));
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            Resource[] resources = resolver.getResources("classpath*:db/**/*");
+            for (Resource resource : resources) {
+                String relativePath = getRelativeResourcePath(resource);
+                if (relativePath == null || !relativePath.contains(".")) {
+                    continue;
+                }
+                Path target = tempDir.resolve(relativePath);
+                Files.createDirectories(target.getParent());
+                try (InputStream is = resource.getInputStream()) {
+                    Files.copy(is, target);
                 }
             }
             return tempDir;
@@ -83,13 +81,25 @@ public class DatabaseMigrations {
         }
     }
 
+    private static String getRelativeResourcePath(Resource resource) throws IOException {
+        String url = resource.getURL().toString();
+        int idx = url.lastIndexOf("/db/");
+        if (idx >= 0) {
+            return url.substring(idx + 1);
+        }
+        return null;
+    }
+
     private static void cleanupChangelogs(Path changelogDir) {
         if (changelogDir != null) {
-            try {
-                for (String file : CHANGELOG_FILES) {
-                    Files.deleteIfExists(changelogDir.resolve(file));
-                }
-                Files.deleteIfExists(changelogDir);
+            try (var walk = Files.walk(changelogDir)) {
+                walk.sorted(Comparator.reverseOrder())
+                        .forEach(p -> {
+                            try {
+                                Files.deleteIfExists(p);
+                            } catch (IOException ignored) {
+                            }
+                        });
             } catch (IOException ignored) {
             }
         }

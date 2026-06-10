@@ -12,6 +12,7 @@ import {
   FileTextOutlined,
   SettingOutlined,
   CodeOutlined,
+  ReadOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -40,6 +41,7 @@ export default function AppLayout() {
     { key: '/inventory', icon: <FileTextOutlined />, label: 'Inventory' },
     { key: '/config', icon: <SettingOutlined />, label: 'Config' },
     { key: '/commands', icon: <CodeOutlined />, label: 'Commands' },
+    { key: '/logs', icon: <ReadOutlined />, label: 'Server Logs' },
   ]
 
   const currentKey = location.pathname === '/' ? '/' : '/' + location.pathname.split('/')[1]
