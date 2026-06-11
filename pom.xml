@@ -304,6 +304,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- libwz: MapleStory WZ binary file parser (JNI) -->
+        <dependency>
+            <groupId>io.github.toyobayashi</groupId>
+            <artifactId>libwz</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
     <build>

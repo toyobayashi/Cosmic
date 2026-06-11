@@ -21,17 +21,29 @@
 */
 package provider;
 
+import provider.wz.BinaryWZFile;
 import provider.wz.WZFiles;
 import provider.wz.XMLWZFile;
 
 import java.nio.file.Path;
 
 public class DataProviderFactory {
+
+    /**
+     * Set {@code -Dwz-mode=binary} to read directly from {@code .wz} files
+     * via libwz instead of pre-extracted XML directories.
+     */
+    private static final boolean USE_BINARY =
+            "binary".equalsIgnoreCase(System.getProperty("wz-mode"));
+
     private static DataProvider getWZ(Path in) {
         return new XMLWZFile(in);
     }
 
     public static DataProvider getDataProvider(WZFiles in) {
+        if (USE_BINARY) {
+            return new BinaryWZFile(in.getWzFilePath());
+        }
         return getWZ(in.getFile());
     }
 }

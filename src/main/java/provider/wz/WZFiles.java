@@ -34,6 +34,15 @@ public enum WZFiles {
         return getFile().toString();
     }
 
+    /**
+     * Returns the absolute path to the {@code .wz} binary file for use in
+     * binary WZ mode.  Falls back to XML mode's directory path if no
+     * individual file is found (e.g. when using extracted XMLs).
+     */
+    public String getWzFilePath() {
+        return Path.of(DIRECTORY, fileName).toString();
+    }
+
     private static String getWzDirectory() {
         // Either provide a custom directory path through the "wz-path" property when launching the .jar, or don't provide one to use the default "wz" directory
         String propertyPath = System.getProperty("wz-path");
