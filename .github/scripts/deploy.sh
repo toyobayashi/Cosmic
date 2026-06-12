@@ -18,7 +18,6 @@ cp -rpf "$REPO_ROOT/scripts" "$APP_DIR/scripts"
 cp -rpf "$REPO_ROOT/src" "$APP_DIR/src"
 cp -rpf "$REPO_ROOT/tools" "$APP_DIR/tools"
 cp -rpf "$REPO_ROOT/wz" "$APP_DIR/wz"
-cp -rpf "$REPO_ROOT/config.yaml" "$APP_DIR/config.yaml"
 
 if [ -d "$REPO_ROOT/ui/dist" ]; then
   echo "Copying UI dist files..."

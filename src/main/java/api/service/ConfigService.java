@@ -12,7 +12,7 @@ import java.util.*;
 
 public class ConfigService {
 
-    private static final String CONFIG_FILE = "config.yaml";
+    private static final String CONFIG_FILE = YamlConfig.getConfigFileName();
     private final Map<String, Object> pendingChanges = new LinkedHashMap<>();
 
     public Map<String, Object> getConfigTypes() {
