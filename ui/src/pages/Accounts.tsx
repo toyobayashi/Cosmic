@@ -61,9 +61,13 @@ export default function Accounts() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  const handleCreate = async (values: Record<string, string>) => {
+  const handleCreate = async (values: Record<string, unknown>) => {
+    const data = { ...values }
+    if (data.birthday && dayjs.isDayjs(data.birthday)) {
+      data.birthday = (data.birthday as dayjs.Dayjs).format('YYYY-MM-DD')
+    }
     try {
-      const res = await api.post('/account/v1', { data: values })
+      const res = await api.post('/account/v1', { data })
       if (res.data.code === 200) {
         message.success('Account created')
         setCreateOpen(false)
