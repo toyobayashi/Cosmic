@@ -83,7 +83,7 @@ public class BinaryWZFile implements DataProvider {
     // ---- DataProvider --------------------------------------------------
 
     @Override
-    public Data getData(String path) {
+    public synchronized Data getData(String path) {
         if (wzFile == null) return null;
 
         WzObject obj = wzFile.getObjectFromPath(path, false);

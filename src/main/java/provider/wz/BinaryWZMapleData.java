@@ -69,7 +69,7 @@ public class BinaryWZMapleData implements Data {
     }
 
     @Override
-    public Data getChildByPath(String path) {
+    public synchronized Data getChildByPath(String path) {
         if (path.startsWith("..")) {
             DataEntity parent = getParent();
             if (parent instanceof Data data) {
@@ -89,7 +89,7 @@ public class BinaryWZMapleData implements Data {
     }
 
     @Override
-    public List<Data> getChildren() {
+    public synchronized List<Data> getChildren() {
         List<Data> result = new ArrayList<>();
         WzPropertyCollection wpc = isImage()
                 ? asImage().wzProperties()
@@ -103,7 +103,7 @@ public class BinaryWZMapleData implements Data {
     }
 
     @Override
-    public Object getData() {
+    public synchronized Object getData() {
         if (isImage()) return null;  // container node, no scalar value
         return switch (asProperty().getPropertyType()) {
             case SHORT  -> asProperty().getShort();
