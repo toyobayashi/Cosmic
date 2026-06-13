@@ -28,3 +28,4 @@ local-config.yaml
 node_modules
 ui/dist
 src/main/resources/static
+/MapleStory

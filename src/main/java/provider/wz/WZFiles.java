@@ -18,8 +18,6 @@ public enum WZFiles {
     SOUND("Sound"),
     UI("UI");
 
-    public static final String DIRECTORY = getWzDirectory();
-
     private final String fileName;
 
     WZFiles(String name) {
@@ -27,20 +25,15 @@ public enum WZFiles {
     }
 
     public Path getFile() {
-        return Path.of(DIRECTORY, fileName);
+        return Path.of(getWzDirectory(), fileName);
     }
 
     public String getFilePath() {
         return getFile().toString();
     }
 
-    /**
-     * Returns the absolute path to the {@code .wz} binary file for use in
-     * binary WZ mode.  Falls back to XML mode's directory path if no
-     * individual file is found (e.g. when using extracted XMLs).
-     */
     public String getWzFilePath() {
-        return Path.of(DIRECTORY, fileName).toString();
+        return Path.of(getWzDirectory(), fileName).toString();
     }
 
     private static String getWzDirectory() {
@@ -51,5 +44,10 @@ public enum WZFiles {
         }
 
         return "wz";
+    }
+
+    /** @return the WZ root directory path (convenience, same as getWzDirectory). */
+    public static String getDirectory() {
+        return getWzDirectory();
     }
 }
