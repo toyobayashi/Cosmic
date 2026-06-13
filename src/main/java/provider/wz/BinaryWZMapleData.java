@@ -5,6 +5,7 @@ import io.github.toyobayashi.libwz.WzImageProperty;
 import io.github.toyobayashi.libwz.WzObject;
 import io.github.toyobayashi.libwz.WzPropertyCollection;
 import io.github.toyobayashi.libwz.WzVectorProperty;
+import io.github.toyobayashi.libwz.WzUOLProperty;
 import provider.Data;
 import provider.DataEntity;
 
@@ -84,9 +85,6 @@ public class BinaryWZMapleData implements Data {
                 : asProperty().getFromPath(path);
         if (child == null) return null;
 
-        WzImageProperty resolved = child.getLinkedWzImageProperty();
-        if (resolved != null && resolved.nativePtr() != 0) child = resolved;
-
         return new BinaryWZMapleData(child);
     }
 
@@ -98,8 +96,6 @@ public class BinaryWZMapleData implements Data {
                 : asProperty().wzProperties();
         if (wpc != null) {
             for (WzImageProperty child : wpc) {
-                WzImageProperty resolved = child.getLinkedWzImageProperty();
-                if (resolved != null && resolved.nativePtr() != 0) child = resolved;
                 result.add(new BinaryWZMapleData(child));
             }
         }
@@ -116,7 +112,7 @@ public class BinaryWZMapleData implements Data {
             case FLOAT  -> asProperty().getFloat();
             case DOUBLE -> asProperty().getDouble();
             case STRING -> asProperty().getString();
-            case UOL    -> asProperty().getString();
+            case UOL    -> ((WzUOLProperty)asProperty()).getValue();
             case VECTOR -> {
                 WzVectorProperty vec = (WzVectorProperty) asProperty();
                 yield new Point(vec.getX(), vec.getY());
