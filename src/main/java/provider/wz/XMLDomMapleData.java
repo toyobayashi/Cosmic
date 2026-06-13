@@ -92,7 +92,12 @@ public class XMLDomMapleData implements Data {
         }
 
         XMLDomMapleData ret = new XMLDomMapleData(myNode);
-        ret.imageDataDir = imageDataDir.resolve(getName().trim()).resolve(path).getParent();
+        try {
+            ret.imageDataDir = imageDataDir.resolve(getName().trim()).resolve(path).getParent();
+        } catch (java.nio.file.InvalidPathException e) {
+            // leave imageDataDir as null – name contains chars illegal
+            // in file-system paths (e.g. ':' on Windows)
+        }
         return ret;
     }
 
@@ -105,7 +110,12 @@ public class XMLDomMapleData implements Data {
             Node childNode = childNodes.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 XMLDomMapleData child = new XMLDomMapleData(childNode);
-                child.imageDataDir = imageDataDir.resolve(getName().trim());
+                try {
+                    child.imageDataDir = imageDataDir.resolve(getName().trim());
+                } catch (java.nio.file.InvalidPathException e) {
+                    // leave imageDataDir as null – name contains chars illegal
+                    // in file-system paths (e.g. ':' on Windows)
+                }
                 ret.add(child);
             }
         }
@@ -194,7 +204,9 @@ public class XMLDomMapleData implements Data {
             return null;
         }
         XMLDomMapleData parentData = new XMLDomMapleData(parentNode);
-        parentData.imageDataDir = imageDataDir.getParent();
+        if (imageDataDir != null) {
+            parentData.imageDataDir = imageDataDir.getParent();
+        }
         return parentData;
     }
 
