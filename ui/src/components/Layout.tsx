@@ -16,6 +16,7 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '../context/AuthContext'
 
@@ -42,6 +43,7 @@ export default function AppLayout() {
     { key: '/config', icon: <SettingOutlined />, label: 'Config' },
     { key: '/commands', icon: <CodeOutlined />, label: 'Commands' },
     { key: '/logs', icon: <ReadOutlined />, label: 'Server Logs' },
+    { key: '/map-query', icon: <EnvironmentOutlined />, label: 'Map Query' },
   ]
 
   const currentKey = location.pathname === '/' ? '/' : '/' + location.pathname.split('/')[1]

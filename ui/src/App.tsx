@@ -12,6 +12,7 @@ import Inventory from './pages/Inventory'
 import Config from './pages/Config'
 import Commands from './pages/Commands'
 import LogsViewer from './pages/LogsViewer'
+import MapQuery from './pages/MapQuery'
 import AppLayout from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/config" element={<Config />} />
         <Route path="/commands" element={<Commands />} />
         <Route path="/logs" element={<LogsViewer />} />
+        <Route path="/map-query" element={<MapQuery />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

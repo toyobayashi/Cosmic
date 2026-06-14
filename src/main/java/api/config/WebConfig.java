@@ -35,6 +35,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/auth/**",
+                        "/api/map/v1/mob-image/**",
+                        "/api/map/v1/bgm/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/swagger-resources/**",
@@ -54,6 +56,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/cache/**")
+                .addResourceLocations("file:cache/")
+                .setCachePeriod(3600);
+
         registry.addResourceHandler("/**")
                 .addResourceLocations("file:ui/dist/")
                 .resourceChain(true)
