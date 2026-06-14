@@ -1419,6 +1419,9 @@ public class MapleMap {
             }
 
             Character dropOwner = monster.killBy(chr);
+
+            broadcastMessage(PacketCreator.killMonster(monster.getObjectId(), animation), monster.getPosition());
+
             if (withDrops && !monster.dropsDisabled()) {
                 if (dropOwner == null) {
                     dropOwner = chr;
@@ -1437,7 +1440,6 @@ public class MapleMap {
             e.printStackTrace();
         } finally {     // thanks resinate for pointing out a memory leak possibly from an exception thrown
             monster.dispatchMonsterKilled(true);
-            broadcastMessage(PacketCreator.killMonster(monster.getObjectId(), animation), monster.getPosition());
         }
 
 
