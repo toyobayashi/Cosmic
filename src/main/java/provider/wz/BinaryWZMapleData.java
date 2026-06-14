@@ -1,9 +1,13 @@
 package provider.wz;
 
+import io.github.toyobayashi.libwz.WzBinaryProperty;
+import io.github.toyobayashi.libwz.WzCanvasProperty;
 import io.github.toyobayashi.libwz.WzImage;
 import io.github.toyobayashi.libwz.WzImageProperty;
 import io.github.toyobayashi.libwz.WzObject;
+import io.github.toyobayashi.libwz.WzPngProperty;
 import io.github.toyobayashi.libwz.WzPropertyCollection;
+import io.github.toyobayashi.libwz.WzSubProperty;
 import io.github.toyobayashi.libwz.WzVectorProperty;
 import io.github.toyobayashi.libwz.WzUOLProperty;
 import provider.Data;
@@ -119,6 +123,38 @@ public class BinaryWZMapleData implements Data {
             }
             case NULL, CANVAS, SUB, CONVEX, SOUND, PNG, LUA, RAW -> null;
         };
+    }
+
+    public synchronized boolean saveCanvasToFile(java.io.File file) {
+        if (isImage()) return false;
+        WzImageProperty prop = asProperty();
+        while (prop instanceof WzSubProperty sub) {
+            var children = sub.wzProperties();
+            if (children != null && children.iterator().hasNext()) {
+                WzImageProperty child = children.iterator().next();
+                if (child instanceof WzCanvasProperty canvas) {
+                    WzPngProperty png = canvas.getPngProperty();
+                    return png != null && png.saveToFile(file.getAbsolutePath());
+                }
+                prop = child;
+            } else {
+                return false;
+            }
+        }
+        if (prop instanceof WzCanvasProperty canvas) {
+            WzPngProperty png = canvas.getPngProperty();
+            return png != null && png.saveToFile(file.getAbsolutePath());
+        }
+        return false;
+    }
+
+    public synchronized byte[] getSoundData() {
+        if (isImage()) return null;
+        WzImageProperty prop = asProperty();
+        if (prop instanceof WzBinaryProperty binary) {
+            return binary.getBytes();
+        }
+        return null;
     }
 
     @Override
