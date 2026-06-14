@@ -936,11 +936,6 @@ public class Server {
         int loginPort = YamlConfig.config.server.LOGIN_PORT;
         loginServer = initLoginServer(loginPort);
 
-        log.info("Listening on port {}", loginPort);
-
-        online = true;
-        Duration initDuration = Duration.between(beforeInit, Instant.now());
-        log.info("Cosmic is now online after {} ms.", initDuration.toMillis());
 
         OpcodeConstants.generateOpcodeNames();
         CommandsExecutor.getInstance();
@@ -948,6 +943,10 @@ public class Server {
         for (Channel ch : this.getAllChannels()) {
             ch.reloadEventScriptManager();
         }
+
+        online = true;
+        Duration initDuration = Duration.between(beforeInit, Instant.now());
+        log.info("Cosmic is now online. Listening on port {} after {} ms.", loginPort, initDuration.toMillis());
     }
 
     private ChannelDependencies registerChannelDependencies() {
