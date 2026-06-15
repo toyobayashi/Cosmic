@@ -17,7 +17,7 @@ export default function Login() {
       if (res.data.code === 200) {
         login(res.data.data.token, values.username)
         message.success('Login successful')
-        navigate('/')
+        navigate('/admin')
       } else {
         message.error(res.data.message || 'Login failed')
       }
@@ -31,6 +31,11 @@ export default function Login() {
   return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
       <Card className="w-96 shadow-2xl" title="Cosmic Admin Login">
+        <div className="text-center mb-4">
+          <Button type="link" onClick={() => navigate('/register')}>
+            No account? Register here
+          </Button>
+        </div>
         <Form name="login" onFinish={onFinish} size="large">
           <Form.Item name="username" rules={[{ required: true, message: 'Please enter username' }]}>
             <Input prefix={<UserOutlined />} placeholder="Username" />

@@ -32,21 +32,22 @@ export default function AppLayout() {
   } = theme.useToken();
 
   const menuItems = [
-    { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
-    { key: '/accounts', icon: <UserOutlined />, label: 'Accounts' },
-    { key: '/players', icon: <GiftOutlined />, label: 'Players' },
-    { key: '/characters', icon: <TeamOutlined />, label: 'Characters' },
-    { key: '/npcs-shop', icon: <ShopOutlined />, label: 'NPC Shop' },
-    { key: '/monster-drop', icon: <BugOutlined />, label: 'Monster Drop' },
-    { key: '/global-drop', icon: <GlobalOutlined />, label: 'Global Drop' },
-    { key: '/inventory', icon: <FileTextOutlined />, label: 'Inventory' },
-    { key: '/config', icon: <SettingOutlined />, label: 'Config' },
-    { key: '/commands', icon: <CodeOutlined />, label: 'Commands' },
-    { key: '/logs', icon: <ReadOutlined />, label: 'Server Logs' },
-    { key: '/map-query', icon: <EnvironmentOutlined />, label: 'Map Query' },
+    { key: '/admin', icon: <DashboardOutlined />, label: 'Dashboard' },
+    { key: '/admin/accounts', icon: <UserOutlined />, label: 'Accounts' },
+    { key: '/admin/players', icon: <GiftOutlined />, label: 'Players' },
+    { key: '/admin/characters', icon: <TeamOutlined />, label: 'Characters' },
+    { key: '/admin/npcs-shop', icon: <ShopOutlined />, label: 'NPC Shop' },
+    { key: '/admin/monster-drop', icon: <BugOutlined />, label: 'Monster Drop' },
+    { key: '/admin/global-drop', icon: <GlobalOutlined />, label: 'Global Drop' },
+    { key: '/admin/inventory', icon: <FileTextOutlined />, label: 'Inventory' },
+    { key: '/admin/config', icon: <SettingOutlined />, label: 'Config' },
+    { key: '/admin/commands', icon: <CodeOutlined />, label: 'Commands' },
+    { key: '/admin/logs', icon: <ReadOutlined />, label: 'Server Logs' },
+    { key: '/admin/map-query', icon: <EnvironmentOutlined />, label: 'Map Query' },
   ]
 
-  const currentKey = location.pathname === '/' ? '/' : '/' + location.pathname.split('/')[1]
+  const segments = location.pathname.split('/')
+  const currentKey = segments.length <= 2 ? '/admin' : '/' + segments[1] + '/' + segments[2]
 
   return (
     <Layout className="h-screen">
@@ -77,7 +78,7 @@ export default function AppLayout() {
               icon={<LogoutOutlined />}
               onClick={() => {
                 logout()
-                navigate('/login')
+                navigate('/admin/login')
               }}
               danger
             >

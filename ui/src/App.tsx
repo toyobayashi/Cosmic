@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
+import Home from './pages/Home'
+import Register from './pages/Register'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Accounts from './pages/Accounts'
@@ -17,7 +19,7 @@ import AppLayout from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth()
-  return token ? <>{children}</> : <Navigate to="/login" replace />
+  return token ? <>{children}</> : <Navigate to="/admin/login" replace />
 }
 
 export default function App() {
@@ -25,26 +27,29 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/admin/login" element={token ? <Navigate to="/admin" replace /> : <Login />} />
       <Route
+        path="/admin"
         element={
           <PrivateRoute>
             <AppLayout />
           </PrivateRoute>
         }
       >
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/accounts" element={<Accounts />} />
-        <Route path="/players" element={<Players />} />
-        <Route path="/characters" element={<Characters />} />
-        <Route path="/npcs-shop" element={<NpcShop />} />
-        <Route path="/monster-drop" element={<MonsterDrop />} />
-        <Route path="/global-drop" element={<GlobalDrop />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/config" element={<Config />} />
-        <Route path="/commands" element={<Commands />} />
-        <Route path="/logs" element={<LogsViewer />} />
-        <Route path="/map-query" element={<MapQuery />} />
+        <Route index element={<Dashboard />} />
+        <Route path="accounts" element={<Accounts />} />
+        <Route path="players" element={<Players />} />
+        <Route path="characters" element={<Characters />} />
+        <Route path="npcs-shop" element={<NpcShop />} />
+        <Route path="monster-drop" element={<MonsterDrop />} />
+        <Route path="global-drop" element={<GlobalDrop />} />
+        <Route path="inventory" element={<Inventory />} />
+        <Route path="config" element={<Config />} />
+        <Route path="commands" element={<Commands />} />
+        <Route path="logs" element={<LogsViewer />} />
+        <Route path="map-query" element={<MapQuery />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
