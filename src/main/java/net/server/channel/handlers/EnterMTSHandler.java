@@ -26,9 +26,11 @@ import client.Client;
 import client.inventory.Equip;
 import client.inventory.Item;
 import config.YamlConfig;
+import constants.id.NpcId;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
+import scripting.npc.NPCScriptManager;
 import server.MTSItemInfo;
 import server.maps.FieldLimit;
 import server.maps.MiniDungeonInfo;
@@ -48,11 +50,6 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(InPacket p, Client c) {
         Character chr = c.getPlayer();
-
-        if (!YamlConfig.config.server.USE_MTS) {
-            c.sendPacket(PacketCreator.enableActions());
-            return;
-        }
 
         if (chr.getEventInstance() != null) {
             c.sendPacket(PacketCreator.serverNotice(5, "Entering Cash Shop or MTS are disabled when registered on an event."));
@@ -76,6 +73,12 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
             c.sendPacket(PacketCreator.enableActions());
             return;
         }
+
+        if (!YamlConfig.config.server.USE_MTS) {
+            NPCScriptManager.getInstance().start(c, NpcId.MAPLE_ADMINISTRATOR, "mtsCustomEntry", null);
+            return;
+        }
+
         if (chr.getLevel() < 10) {
             c.sendPacket(PacketCreator.blockedMessage2(5));
             c.sendPacket(PacketCreator.enableActions());

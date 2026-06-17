@@ -82,6 +82,18 @@ public class ScriptEvaluationTest {
     }
 
     @ParameterizedTest
+    @MethodSource("mtsEntryScriptPath")
+    void mtsCustomEntryScriptShouldEvaluate(String npcScriptPath) {
+        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(npcScriptPath);
+
+        assertNotNull(scriptEngine);
+    }
+
+    private static List<String> mtsEntryScriptPath() {
+        return List.of("npc/mtsCustomEntry.js");
+    }
+
+    @ParameterizedTest
     @MethodSource("portalScriptFilePaths")
     void portalScriptShouldEvaluate(String portalScriptPath) {
         ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(portalScriptPath);
