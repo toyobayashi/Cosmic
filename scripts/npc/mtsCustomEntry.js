@@ -4,15 +4,23 @@ var selectedQuestSkipTarget = -1;
 
 var SKIP_BEGINNER_QUESTS = 0;
 var QUICK_MOVE = 1;
+var RETURN_NEAREST_TOWN = 2;
 
 var quickMoveMaps = [
+    ["Amherst", 1000000],
+    ["Southperry", 2000000],
     ["Lith Harbor", 104000000],
     ["Henesys", 100000000],
     ["Ellinia", 101000000],
     ["Perion", 102000000],
     ["Kerning City", 103000000],
+    ["Kerning Square", 103040000],
     ["Nautilus Harbor", 120000000],
     ["Sleepywood", 105040300],
+    ["Mushroom Kingdom", 106020000],
+    ["Florina Beach", 110000000],
+    ["Ereve", 130000000],
+    ["Rien", 140000000],
     ["Orbis", 200000000],
     ["El Nath", 211000000],
     ["Ludibrium", 220000000],
@@ -20,13 +28,21 @@ var quickMoveMaps = [
     ["Korean Folk Town", 222000000],
     ["Aquarium", 230000000],
     ["Leafre", 240000000],
+    ["Neo City", 240070000],
     ["Mu Lung", 250000000],
     ["Herb Town", 251000000],
     ["Ariant", 260000000],
     ["Magatia", 261000000],
+    ["Temple of Time", 270000100],
+    ["Ellin Forest", 300000000],
+    ["Singapore", 540000000],
+    ["Boat Quay Town", 541000000],
+    ["Kampung Village", 551000000],
     ["New Leaf City", 600000000],
     ["Mushroom Shrine", 800000000],
-    ["Showa Town", 801000000]
+    ["Showa Town", 801000000],
+    ["Happyville", 209000000],
+    ["Amoria", 680000000]
 ];
 
 var explorerSkipTargets = [
@@ -58,6 +74,8 @@ function action(mode, type, selection) {
             sendSkipBeginnerQuestsPrompt();
         } else if (selectedMenu == QUICK_MOVE && !isPreJobBeginner()) {
             cm.sendSimple(buildQuickMoveSelection());
+        } else if (selectedMenu == RETURN_NEAREST_TOWN) {
+            returnToNearestTown();
         } else {
             cm.dispose();
         }
@@ -84,6 +102,7 @@ function buildMainSelection() {
     } else {
         text += "#L" + QUICK_MOVE + "#Quick Move#l";
     }
+    text += "\r\n#L" + RETURN_NEAREST_TOWN + "#Return to Nearest Town#l";
 
     return text;
 }
@@ -190,6 +209,11 @@ function handleQuickMoveSelection(selection) {
     }
 
     cm.warp(quickMoveMaps[selection][1]);
+    cm.dispose();
+}
+
+function returnToNearestTown() {
+    cm.warp(cm.getPlayer().getMap().getReturnMapId());
     cm.dispose();
 }
 

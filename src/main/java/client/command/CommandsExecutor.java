@@ -31,6 +31,7 @@ import client.command.commands.gm0.EnableAuthCommand;
 import client.command.commands.gm0.EquipLvCommand;
 import client.command.commands.gm0.GachaCommand;
 import client.command.commands.gm0.GmCommand;
+import client.command.commands.gm0.GuideCommand;
 import client.command.commands.gm0.HelpCommand;
 import client.command.commands.gm0.JoinEventCommand;
 import client.command.commands.gm0.LeaveEventCommand;
@@ -367,6 +368,7 @@ public class CommandsExecutor {
         addCommand("mylawn", MapOwnerClaimCommand.class);
         addCommand("bosshp", BossHpCommand.class);
         addCommand("mobhp", MobHpCommand.class);
+        addCommand("guide", GuideCommand.class);
 
         commandsNameDesc.add(levelCommandsCursor);
     }

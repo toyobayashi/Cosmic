@@ -30,7 +30,6 @@ import constants.id.NpcId;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
-import scripting.npc.NPCScriptManager;
 import server.MTSItemInfo;
 import server.maps.FieldLimit;
 import server.maps.MiniDungeonInfo;
@@ -75,7 +74,7 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
         }
 
         if (!YamlConfig.config.server.USE_MTS) {
-            NPCScriptManager.getInstance().start(c, NpcId.MAPLE_ADMINISTRATOR, "mtsCustomEntry", null);
+            c.getAbstractPlayerInteraction().openNpc(NpcId.MAPLE_ADMINISTRATOR, "mtsCustomEntry");
             return;
         }
 
