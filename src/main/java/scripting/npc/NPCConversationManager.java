@@ -381,6 +381,12 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     }
 
     public void openShopNPC(int id) {
+        if (c.getPlayer().getShop() != null) {
+            c.getPlayer().dropMessage(1, "Please close the shop UI first.");
+            c.sendPacket(PacketCreator.enableActions());
+            return;
+        }
+
         Shop shop = ShopFactory.getInstance().getShop(id);
 
         if (shop != null) {

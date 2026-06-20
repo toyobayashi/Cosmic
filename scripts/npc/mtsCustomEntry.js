@@ -5,6 +5,47 @@ var selectedQuestSkipTarget = -1;
 var SKIP_BEGINNER_QUESTS = 0;
 var QUICK_MOVE = 1;
 var RETURN_NEAREST_TOWN = 2;
+var QUICK_SHOP = 3;
+var QUICK_STORAGE = 4;
+
+var HENESYS_POTION_SHOP = 1011100;
+var HENESYS_STORAGE = 1012009;
+
+var nearestTownPotionShops = [
+    [1000000, 11100], // Amherst
+    [104000000, 1001100], // Lith Harbor
+    [100000000, 1011100], // Henesys
+    [103040000, 1052116], // Kerning Square
+    [102000000, 1021100], // Perion
+    [101000000, 1031100], // Ellinia
+    [103000000, 1051002], // Kerning City
+    [105040300, 1061002], // Sleepywood
+    [106020000, 1301000], // Mushroom Forest Field
+    [110000000, 1081000], // Florina Beach
+    [120000000, 1091002], // Nautilus Harbor
+    [130000000, 1100002], // Ereve
+    [140000000, 1200002], // Rien
+    [200000000, 2012005], // Orbis
+    [211000000, 2022001], // El Nath
+    [220000000, 2041006], // Ludibrium
+    [221000000, 2051000], // Omega Sector
+    [222000000, 2070001], // Korean Folk Town
+    [230000000, 2060004], // Aquarium
+    [240000000, 2080001], // Leafre
+    [250000000, 2090003], // Mu Lung
+    [251000000, 2093002], // Herb Town
+    [260000000, 2100004], // Ariant
+    [261000000, 2110001], // Magatia
+    [270000000, 2080001], // Temple of Time
+    [270000100, 2080001], // Temple of Time
+    [300000000, 2130000], // Altaire Camp
+    [540000000, 9270021], // CBD
+    [541000000, 9270022], // Boat Quay Town
+    [551000000, 9270065], // Kampung Village
+    [600000000, 9201060], // New Leaf City
+    [800000000, 9120002], // Mushroom Shrine
+    [801000000, 9120002]  // Showa Town
+];
 
 var quickMoveMaps = [
     ["Amherst", 1000000],
@@ -76,6 +117,10 @@ function action(mode, type, selection) {
             cm.sendSimple(buildQuickMoveSelection());
         } else if (selectedMenu == RETURN_NEAREST_TOWN) {
             returnToNearestTown();
+        } else if (selectedMenu == QUICK_SHOP && !isPreJobBeginner()) {
+            openQuickShop();
+        } else if (selectedMenu == QUICK_STORAGE && !isPreJobBeginner()) {
+            openQuickStorage();
         } else {
             cm.dispose();
         }
@@ -101,6 +146,8 @@ function buildMainSelection() {
         text += "#L" + SKIP_BEGINNER_QUESTS + "#Skip Beginner Quests#l";
     } else {
         text += "#L" + QUICK_MOVE + "#Quick Move#l";
+        text += "\r\n#L" + QUICK_SHOP + "#Quick Shop#l";
+        text += "\r\n#L" + QUICK_STORAGE + "#Quick Storage#l";
     }
     text += "\r\n#L" + RETURN_NEAREST_TOWN + "#Return to Nearest Town#l";
 
@@ -215,6 +262,34 @@ function handleQuickMoveSelection(selection) {
 function returnToNearestTown() {
     cm.warp(cm.getPlayer().getMap().getReturnMapId());
     cm.dispose();
+}
+
+function openQuickShop() {
+    cm.openShopNPC(getNearestTownPotionShop());
+    cm.dispose();
+}
+
+function openQuickStorage() {
+    if (cm.getPlayer().getShop() != null) {
+        cm.dropMessage(1, "Please close the shop UI first.");
+        cm.dispose();
+        return;
+    }
+
+    cm.getPlayer().getStorage().sendStorage(cm.getClient(), HENESYS_STORAGE);
+    cm.dispose();
+}
+
+function getNearestTownPotionShop() {
+    var nearestTown = cm.getPlayer().getMap().getReturnMapId();
+
+    for (var i = 0; i < nearestTownPotionShops.length; i++) {
+        if (nearestTownPotionShops[i][0] == nearestTown) {
+            return nearestTownPotionShops[i][1];
+        }
+    }
+
+    return HENESYS_POTION_SHOP;
 }
 
 function buildQuickMoveSelection() {
