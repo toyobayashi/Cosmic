@@ -123,7 +123,7 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
             int gain = -lose * (ef.getY() / 100);
             chr.addMP(gain);
         } else if (skillid == SuperGM.HEAL_PLUS_DISPEL) {
-            p.skip(11);
+            skipSuperGmHealExtraBytes(p);
             chr.getMap().broadcastMessage(chr, PacketCreator.showBuffEffect(chr.getId(), skillid, chr.getSkillLevel(skillid)), false);
         } else if (skillid % 10000000 == 1004) {
             p.readShort();
@@ -158,5 +158,9 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
         } else {
             c.sendPacket(PacketCreator.enableActions());
         }
+    }
+
+    static void skipSuperGmHealExtraBytes(InPacket p) {
+        p.skip(Math.min(11, p.available()));
     }
 }
