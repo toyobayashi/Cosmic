@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
-import java.nio.charset.StandardCharsets;
+import constants.string.CharsetConstants;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -170,7 +170,21 @@ class ByteBufOutPacketTest {
         int length = wrapped.readShortLE();
         byte[] stringBytes = new byte[length];
         wrapped.readBytes(stringBytes);
-        String readString = new String(stringBytes, StandardCharsets.US_ASCII);
+        String readString = new String(stringBytes, CharsetConstants.CHARSET);
+
+        assertEquals(writtenString, readString);
+    }
+
+    @Test
+    void writeString_shouldPreserveChineseText() {
+        final String writtenString = "你好，欢迎";
+        outPacket.writeString(writtenString);
+
+        ByteBuf wrapped = wrapExplicitlyWrittenBytes(outPacket);
+        int length = wrapped.readShortLE();
+        byte[] stringBytes = new byte[length];
+        wrapped.readBytes(stringBytes);
+        String readString = new String(stringBytes, CharsetConstants.CHARSET);
 
         assertEquals(writtenString, readString);
     }
