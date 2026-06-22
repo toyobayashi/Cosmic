@@ -55,6 +55,7 @@ import constants.id.ItemId;
 import constants.id.MapId;
 import constants.id.NpcId;
 import constants.inventory.ItemConstants;
+import constants.string.CharsetConstants;
 import constants.skills.Buccaneer;
 import constants.skills.ChiefBandit;
 import constants.skills.Corsair;
@@ -6747,7 +6748,7 @@ public class PacketCreator {
 
     private static String getRightPaddedStr(String in, char padchar, int length) {
         StringBuilder builder = new StringBuilder(in);
-        for (int x = in.length(); x < length; x++) {
+        while (builder.toString().getBytes(CharsetConstants.CHARSET).length < length) {
             builder.append(padchar);
         }
         return builder.toString();

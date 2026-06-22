@@ -48,6 +48,7 @@ import constants.id.ItemId;
 import constants.id.MapId;
 import constants.id.MobId;
 import constants.inventory.ItemConstants;
+import constants.string.CharsetConstants;
 import constants.skills.Aran;
 import constants.skills.Beginner;
 import constants.skills.Bishop;
@@ -983,7 +984,18 @@ public class Character extends AbstractCharacterObject {
                 return false;
             }
         }
-        return getIdByName(name) < 0 && Pattern.compile("[a-zA-Z0-9]{3,12}").matcher(name).matches();
+        return getIdByName(name) < 0 && isValidNewCharacterName(name);
+    }
+
+    public static boolean isValidNewCharacterName(String name) {
+        if (name == null) {
+            return false;
+        }
+
+        int encodedLength = name.getBytes(CharsetConstants.CHARSET).length;
+        return encodedLength >= 3
+                && encodedLength <= 12
+                && Pattern.compile("[\\p{IsHan}a-zA-Z0-9]+").matcher(name).matches();
     }
 
     public boolean canDoor() {
