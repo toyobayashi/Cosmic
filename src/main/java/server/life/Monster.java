@@ -1248,8 +1248,7 @@ public class Monster extends AbstractLoadedLife {
                     poisonDamage += (Randomizer.nextInt(gap) + minDmg);
                 }
                 poisonDamage = Math.min(Short.MAX_VALUE, poisonDamage);
-                status.setValue(MonsterStatus.VENOMOUS_WEAPON, poisonDamage);
-                status.setValue(MonsterStatus.POISON, poisonDamage);
+                setVenomDamageStatus(status, poisonDamage);
                 animationTime = broadcastStatusEffect(status);
 
                 overtimeAction = new DamageTask(poisonDamage, from, status, 0);
@@ -1340,6 +1339,11 @@ public class Monster extends AbstractLoadedLife {
 
         MobStatusService service = (MobStatusService) map.getChannelServer().getServiceAccess(ChannelServices.MOB_STATUS);
         service.registerMobStatus(map.getId(), effect, cancelTask, duration);
+    }
+
+    static void setVenomDamageStatus(MonsterStatusEffect status, int poisonDamage) {
+        status.removeActiveStatus(MonsterStatus.POISON);
+        status.setValue(MonsterStatus.VENOMOUS_WEAPON, poisonDamage);
     }
 
     public void refreshMobPosition() {
