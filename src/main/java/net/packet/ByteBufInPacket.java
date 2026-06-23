@@ -1,16 +1,26 @@
 package net.packet;
 
-import constants.string.CharsetConstants;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 
 import java.awt.*;
+import java.nio.charset.Charset;
 
 public class ByteBufInPacket implements InPacket {
     private final ByteBuf byteBuf;
+    private Charset charset;
 
     public ByteBufInPacket(ByteBuf byteBuf) {
+        this(byteBuf, PacketCharsets.DEFAULT_CHARSET);
+    }
+
+    public ByteBufInPacket(ByteBuf byteBuf, Charset charset) {
         this.byteBuf = byteBuf;
+        this.charset = charset;
+    }
+
+    public void setCharset(Charset charset) {
+        this.charset = charset;
     }
 
     @Override
@@ -52,7 +62,7 @@ public class ByteBufInPacket implements InPacket {
         short length = readShort();
         byte[] stringBytes = new byte[length];
         byteBuf.readBytes(stringBytes);
-        return new String(stringBytes, CharsetConstants.CHARSET);
+        return new String(stringBytes, charset);
     }
 
     @Override

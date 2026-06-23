@@ -31,8 +31,11 @@ import io.netty.handler.timeout.IdleStateEvent;
 import net.PacketHandler;
 import net.PacketProcessor;
 import net.netty.InvalidPacketHeaderException;
+import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
+import net.packet.PacketCharsets;
+import net.packet.PerClientPacket;
 import net.packet.logging.LoggingUtil;
 import net.packet.logging.MonitoredChrLogger;
 import net.server.Server;
@@ -74,6 +77,7 @@ import javax.script.ScriptEngine;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -149,6 +153,8 @@ public class Client extends ChannelInboundHandlerAdapter {
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
     private int lang = 0;
+    private int packetCodePage = PacketCharsets.DEFAULT_CODEPAGE;
+    private Charset packetCharset = PacketCharsets.DEFAULT_CHARSET;
 
     public enum Type {
         LOGIN,
@@ -176,6 +182,22 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public static Client createMock() {
         return new Client(null, -1, null, null, -123, -123);
+    }
+
+    public int getPacketCodePage() {
+        return packetCodePage;
+    }
+
+    public Charset getPacketCharset() {
+        return packetCharset;
+    }
+
+    public void setPacketCodePage(int packetCodePage) {
+        if (!PacketCharsets.isSupportedWindowsCodePage(packetCodePage)) {
+            packetCodePage = PacketCharsets.DEFAULT_CODEPAGE;
+        }
+        this.packetCodePage = packetCodePage;
+        this.packetCharset = PacketCharsets.forWindowsCodePage(packetCodePage);
     }
 
     @Override
@@ -206,6 +228,9 @@ public class Client extends ChannelInboundHandlerAdapter {
         if (!(msg instanceof InPacket packet)) {
             log.warn("Received invalid message: {}", msg);
             return;
+        }
+        if (packet instanceof ByteBufInPacket byteBufPacket) {
+            byteBufPacket.setCharset(packetCharset);
         }
 
         short opcode = packet.readShort();
@@ -1465,6 +1490,9 @@ public class Client extends ChannelInboundHandlerAdapter {
     public void sendPacket(Packet packet) {
         announcerLock.lock();
         try {
+            if (packet instanceof PerClientPacket perClientPacket) {
+                packet = perClientPacket.forClient(this);
+            }
             ioChannel.writeAndFlush(packet);
         } finally {
             announcerLock.unlock();

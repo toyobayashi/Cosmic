@@ -3,6 +3,7 @@ package net.packet;
 import net.opcodes.SendOpcode;
 
 import java.awt.*;
+import java.nio.charset.Charset;
 
 public interface OutPacket extends Packet {
     void writeByte(byte value);
@@ -14,10 +15,15 @@ public interface OutPacket extends Packet {
     void writeBool(boolean value);
     void writeString(String value);
     void writeFixedString(String value);
+    void writeFixedString(String value, int byteLength);
     void writePos(Point value);
     void skip(int numberOfBytes);
 
     static OutPacket create(SendOpcode opcode) {
         return new ByteBufOutPacket(opcode);
+    }
+
+    static OutPacket create(SendOpcode opcode, Charset charset) {
+        return new ByteBufOutPacket(opcode, charset);
     }
 }

@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
-import constants.string.CharsetConstants;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -170,14 +169,14 @@ class ByteBufOutPacketTest {
         int length = wrapped.readShortLE();
         byte[] stringBytes = new byte[length];
         wrapped.readBytes(stringBytes);
-        String readString = new String(stringBytes, CharsetConstants.CHARSET);
+        String readString = new String(stringBytes, PacketCharsets.DEFAULT_CHARSET);
 
         assertEquals(writtenString, readString);
     }
 
     @Test
-    void writeString_shouldPreserveTextEncodableByConfiguredCharset() {
-        final String writtenString = CharsetConstants.CHARSET.newEncoder().canEncode("你好，欢迎")
+    void writeString_shouldPreserveTextEncodableByDefaultPacketCharset() {
+        final String writtenString = PacketCharsets.DEFAULT_CHARSET.newEncoder().canEncode("你好，欢迎")
                 ? "你好，欢迎"
                 : "Welcome";
         outPacket.writeString(writtenString);
@@ -186,7 +185,7 @@ class ByteBufOutPacketTest {
         int length = wrapped.readShortLE();
         byte[] stringBytes = new byte[length];
         wrapped.readBytes(stringBytes);
-        String readString = new String(stringBytes, CharsetConstants.CHARSET);
+        String readString = new String(stringBytes, PacketCharsets.DEFAULT_CHARSET);
 
         assertEquals(writtenString, readString);
     }

@@ -264,7 +264,6 @@ public class ConfigService {
 
         w.write("\n    #Miscellaneous Configuration\n");
         writeField(w, "TIMEZONE", sc.TIMEZONE);
-        writeField(w, "CHARSET", sc.CHARSET);
         writeField(w, "USE_DISPLAY_NUMBERS_WITH_COMMA", sc.USE_DISPLAY_NUMBERS_WITH_COMMA);
         writeField(w, "USE_UNITPRICE_WITH_COMMA", sc.USE_UNITPRICE_WITH_COMMA);
         writeField(w, "MAX_MONITORED_BUFFSTATS", sc.MAX_MONITORED_BUFFSTATS);

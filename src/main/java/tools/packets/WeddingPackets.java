@@ -16,7 +16,6 @@ import net.packet.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.PacketCreator;
-import tools.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -293,8 +292,8 @@ public class WeddingPackets extends PacketCreator {
             p.writeInt(ItemId.WEDDING_RING_MOONSTONE); // Engagement Ring's Outcome (doesn't matter for engagement)
             p.writeInt(ItemId.WEDDING_RING_MOONSTONE); // Engagement Ring's Outcome (doesn't matter for engagement)
         }
-        p.writeFixedString(StringUtil.getRightPaddedStr(chr.getGender() == 0 ? chr.getName() : Character.getNameById(chr.getPartnerId()), '\0', 13));
-        p.writeFixedString(StringUtil.getRightPaddedStr(chr.getGender() == 0 ? Character.getNameById(chr.getPartnerId()) : chr.getName(), '\0', 13));
+        p.writeFixedString(chr.getGender() == 0 ? chr.getName() : Character.getNameById(chr.getPartnerId()), 13);
+        p.writeFixedString(chr.getGender() == 0 ? Character.getNameById(chr.getPartnerId()) : chr.getName(), 13);
 
         return p;
     }

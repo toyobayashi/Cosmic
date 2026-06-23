@@ -42,6 +42,7 @@ import net.ChannelDependencies;
 import net.PacketProcessor;
 import net.netty.LoginServer;
 import net.packet.Packet;
+import net.packet.PacketCharsets;
 import net.server.channel.Channel;
 import net.server.coordinator.session.IpAddresses;
 import net.server.coordinator.session.SessionCoordinator;
@@ -132,6 +133,7 @@ public class Server {
     private final Map<Integer, Short> accountCharacterCount = new HashMap<>();
     private final Map<Integer, Integer> worldChars = new HashMap<>();
     private final Map<String, Integer> transitioningChars = new HashMap<>();
+    private final Map<Integer, Integer> transitioningCharCodePages = new HashMap<>();
     private final List<Pair<Integer, String>> worldRecommendedList = new LinkedList<>();
     private final Map<Integer, Guild> guilds = new HashMap<>(100);
     private final Map<Client, Long> inLoginState = new HashMap<>(100);
@@ -1816,7 +1818,18 @@ public class Server {
         lgnWLock.lock();
         try {
             transitioningChars.put(remoteIp, charId);
+            transitioningCharCodePages.put(charId, client.getPacketCodePage());
         } finally {
+            lgnWLock.unlock();
+        }
+    }
+
+    public int takeCharacterCodePageInTransition(int charId) {
+        lgnWLock.lock();
+        try {
+            return transitioningCharCodePages.getOrDefault(charId, PacketCharsets.DEFAULT_CODEPAGE);
+        } finally {
+            transitioningCharCodePages.remove(charId);
             lgnWLock.unlock();
         }
     }

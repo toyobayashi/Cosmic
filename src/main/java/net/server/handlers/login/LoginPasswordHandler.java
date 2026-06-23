@@ -26,6 +26,7 @@ import client.DefaultDates;
 import config.YamlConfig;
 import net.PacketHandler;
 import net.packet.InPacket;
+import net.packet.PacketCharsets;
 import net.server.Server;
 import net.server.coordinator.session.Hwid;
 import tools.BCrypt;
@@ -47,6 +48,8 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 
 public final class LoginPasswordHandler implements PacketHandler {
+    private static final int KAENTAKE_CHARSET_MAGIC = 0x4B544B43;
+    private static final byte KAENTAKE_CHARSET_VERSION = 1;
 
     @Override
     public boolean validateState(Client c) {
@@ -73,6 +76,7 @@ public final class LoginPasswordHandler implements PacketHandler {
 
         p.skip(6);   // localhost masked the initial part with zeroes...
         byte[] hwidNibbles = p.readBytes(4);
+        c.setPacketCodePage(readOptionalCodePage(p));
         Hwid hwid = new Hwid(HexTool.toCompactHexString(hwidNibbles));
         int loginok = c.login(login, pwd, hwid);
 
@@ -140,5 +144,19 @@ public final class LoginPasswordHandler implements PacketHandler {
     private static void login(Client c) {
         c.sendPacket(PacketCreator.getAuthSuccess(c));//why the fk did I do c.getAccountName()?
         Server.getInstance().registerLoginState(c);
+    }
+
+    private static int readOptionalCodePage(InPacket p) {
+        if (p.available() < 7) {
+            return PacketCharsets.DEFAULT_CODEPAGE;
+        }
+
+        int magic = p.readInt();
+        byte version = p.readByte();
+        int codePage = Short.toUnsignedInt(p.readShort());
+        if (magic != KAENTAKE_CHARSET_MAGIC || version != KAENTAKE_CHARSET_VERSION) {
+            return PacketCharsets.DEFAULT_CODEPAGE;
+        }
+        return PacketCharsets.isSupportedWindowsCodePage(codePage) ? codePage : PacketCharsets.DEFAULT_CODEPAGE;
     }
 }

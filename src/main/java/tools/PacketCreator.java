@@ -66,6 +66,7 @@ import net.packet.ByteBufOutPacket;
 import net.packet.InPacket;
 import net.packet.OutPacket;
 import net.packet.Packet;
+import net.packet.PerClientPacket;
 import net.server.PlayerCoolDownValueHolder;
 import net.server.Server;
 import net.server.channel.Channel;
@@ -123,6 +124,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -135,6 +137,10 @@ public class PacketCreator {
     private final static long DEFAULT_TIME = 150842304000000000L;//00 80 05 BB 46 E6 17 02
     public final static long ZERO_TIME = 94354848000000000L;//00 40 E0 FD 3B 37 4F 01
     private final static long PERMANENT = 150841440000000000L; // 00 C0 9B 90 7D E5 17 02
+
+    private static Packet perClientPacket(Function<Client, Packet> factory) {
+        return new PerClientPacket(factory, () -> factory.apply(Client.createMock()));
+    }
 
     public static long getTime(long utcTimestamp) {
         if (utcTimestamp < 0 && utcTimestamp >= -3) {
@@ -183,7 +189,7 @@ public class PacketCreator {
 
     private static void addCharStats(OutPacket p, Character chr) {
         p.writeInt(chr.getId()); // character id
-        p.writeFixedString(StringUtil.getRightPaddedStr(chr.getName(), '\0', 13));
+        p.writeFixedString(chr.getName(), 13);
         p.writeByte(chr.getGender()); // gender (0 = male, 1 = female)
         p.writeByte(chr.getSkinColor().getId()); // skin color
         p.writeInt(chr.getFace()); // face
@@ -429,7 +435,7 @@ public class PacketCreator {
         addExpirationTime(p, item.getExpiration());
         if (isPet) {
             Pet pet = item.getPet();
-            p.writeFixedString(StringUtil.getRightPaddedStr(pet.getName(), '\0', 13));
+            p.writeFixedString(pet.getName(), 13);
             p.writeByte(pet.getLevel());
             p.writeShort(pet.getTameness());
             p.writeByte(pet.getFullness());
@@ -903,7 +909,7 @@ public class PacketCreator {
      * <br> 21: Verify account via email<br>
      */
     public static Packet getCharList(Client c, int serverId, int status) {
-        final OutPacket p = OutPacket.create(SendOpcode.CHARLIST);
+        final OutPacket p = OutPacket.create(SendOpcode.CHARLIST, c.getPacketCharset());
         p.writeByte(status);
         List<Character> chars = c.loadCharacters(serverId);
         p.writeByte((byte) chars.size());
@@ -973,7 +979,7 @@ public class PacketCreator {
      * @return The character info packet.
      */
     public static Packet getCharInfo(Character chr) {
-        final OutPacket p = OutPacket.create(SendOpcode.SET_FIELD);
+        final OutPacket p = OutPacket.create(SendOpcode.SET_FIELD, chr.getClient().getPacketCharset());
         p.writeInt(chr.getClient().getChannel() - 1);
         p.writeByte(1);
         p.writeByte(1);
@@ -1218,7 +1224,7 @@ public class PacketCreator {
      * @return The server message packet.
      */
     public static Packet serverMessage(String message) {
-        return serverMessage(4, (byte) 0, message, true, false, 0);
+        return serverMessage(4, 0, message, true, false, 0);
     }
 
     /**
@@ -1274,7 +1280,11 @@ public class PacketCreator {
      * @return The server notice packet.
      */
     private static Packet serverMessage(int type, int channel, String message, boolean servermessage, boolean megaEar, int npc) {
-        OutPacket p = OutPacket.create(SendOpcode.SERVERMESSAGE);
+        return perClientPacket(c -> serverMessage(c, type, channel, message, servermessage, megaEar, npc));
+    }
+
+    private static Packet serverMessage(Client c, int type, int channel, String message, boolean servermessage, boolean megaEar, int npc) {
+        OutPacket p = OutPacket.create(SendOpcode.SERVERMESSAGE, c.getPacketCharset());
         p.writeByte(type);
         if (servermessage) {
             p.writeByte(1);
@@ -1303,7 +1313,11 @@ public class PacketCreator {
      * @return
      */
     public static Packet getAvatarMega(Character chr, String medal, int channel, int itemId, List<String> message, boolean ear) {
-        final OutPacket p = OutPacket.create(SendOpcode.SET_AVATAR_MEGAPHONE);
+        return perClientPacket(c -> getAvatarMega(c, chr, medal, channel, itemId, message, ear));
+    }
+
+    private static Packet getAvatarMega(Client c, Character chr, String medal, int channel, int itemId, List<String> message, boolean ear) {
+        final OutPacket p = OutPacket.create(SendOpcode.SET_AVATAR_MEGAPHONE, c.getPacketCharset());
         p.writeInt(itemId);
         p.writeString(medal + chr.getName());
         for (String s : message) {
@@ -1334,7 +1348,11 @@ public class PacketCreator {
      * @return
      */
     public static Packet gachaponMessage(Item item, String town, Character player) {
-        final OutPacket p = OutPacket.create(SendOpcode.SERVERMESSAGE);
+        return perClientPacket(c -> gachaponMessage(c, item, town, player));
+    }
+
+    private static Packet gachaponMessage(Client c, Item item, String town, Character player) {
+        final OutPacket p = OutPacket.create(SendOpcode.SERVERMESSAGE, c.getPacketCharset());
         p.writeByte(0x0B);
         p.writeString(player.getName() + " : got a(n)");
         p.writeInt(0); //random?
@@ -1941,7 +1959,7 @@ public class PacketCreator {
      * @return The spawn player packet.
      */
     public static Packet spawnPlayerMapObject(Client target, Character chr, boolean enteringField) {
-        OutPacket p = OutPacket.create(SendOpcode.SPAWN_PLAYER);
+        OutPacket p = OutPacket.create(SendOpcode.SPAWN_PLAYER, target.getPacketCharset());
         p.writeInt(chr.getId());
         p.writeByte(chr.getLevel()); //v83
         p.writeString(chr.getName());
@@ -2692,6 +2710,13 @@ public class PacketCreator {
 
     public static Packet addNewCharEntry(Character chr) {
         final OutPacket p = OutPacket.create(SendOpcode.ADD_NEW_CHAR_ENTRY);
+        p.writeByte(0);
+        addCharEntry(p, chr, false);
+        return p;
+    }
+
+    public static Packet addNewCharEntry(Client c, Character chr) {
+        final OutPacket p = OutPacket.create(SendOpcode.ADD_NEW_CHAR_ENTRY, c.getPacketCharset());
         p.writeByte(0);
         addCharEntry(p, chr, false);
         return p;
@@ -3841,7 +3866,7 @@ public class PacketCreator {
             p.writeInt(partychar.getId());
         }
         for (PartyCharacter partychar : partymembers) {
-            p.writeFixedString(getRightPaddedStr(partychar.getName(), '\0', 13));
+            p.writeFixedString(partychar.getName(), 13);
         }
         for (PartyCharacter partychar : partymembers) {
             p.writeInt(partychar.getJobId());
@@ -3967,7 +3992,11 @@ public class PacketCreator {
      * @return
      */
     public static Packet multiChat(String name, String chattext, int mode) {
-        OutPacket p = OutPacket.create(SendOpcode.MULTICHAT);
+        return perClientPacket(c -> multiChat(c, name, chattext, mode));
+    }
+
+    private static Packet multiChat(Client c, String name, String chattext, int mode) {
+        OutPacket p = OutPacket.create(SendOpcode.MULTICHAT, c.getPacketCharset());
         p.writeByte(mode);
         p.writeString(name);
         p.writeString(chattext);
@@ -4110,10 +4139,10 @@ public class PacketCreator {
         for (BuddylistEntry buddy : buddylist) {
             if (buddy.isVisible()) {
                 p.writeInt(buddy.getCharacterId()); // cid
-                p.writeFixedString(getRightPaddedStr(buddy.getName(), '\0', 13));
+                p.writeFixedString(buddy.getName(), 13);
                 p.writeByte(0); // opposite status
                 p.writeInt(buddy.getChannel() - 1);
-                p.writeFixedString(getRightPaddedStr(buddy.getGroup(), '\0', 13));
+                p.writeFixedString(buddy.getGroup(), 13);
                 p.writeInt(0);//mapid?
             }
         }
@@ -4135,7 +4164,7 @@ public class PacketCreator {
         p.writeInt(chrIdFrom);
         p.writeString(nameFrom);
         p.writeInt(chrIdFrom);
-        p.writeFixedString(getRightPaddedStr(nameFrom, '\0', 11));
+        p.writeFixedString(nameFrom, 11);
         p.writeByte(0x09);
         p.writeByte(0xf0);
         p.writeByte(0x01);
@@ -5405,7 +5434,11 @@ public class PacketCreator {
     }
 
     public static Packet sendYellowTip(String tip) {
-        final OutPacket p = OutPacket.create(SendOpcode.SET_WEEK_EVENT_MESSAGE);
+        return perClientPacket(c -> sendYellowTip(c, tip));
+    }
+
+    private static Packet sendYellowTip(Client c, String tip) {
+        final OutPacket p = OutPacket.create(SendOpcode.SET_WEEK_EVENT_MESSAGE, c.getPacketCharset());
         p.writeByte(0xFF);
         p.writeString(tip);
         p.writeShort(0);
@@ -6776,7 +6809,7 @@ public class PacketCreator {
         p.writeShort(chr.getCrushRings().size());
         for (Ring ring : chr.getCrushRings()) {
             p.writeInt(ring.getPartnerChrId());
-            p.writeFixedString(getRightPaddedStr(ring.getPartnerName(), '\0', 13));
+            p.writeFixedString(ring.getPartnerName(), 13);
             p.writeInt(ring.getRingId());
             p.writeInt(0);
             p.writeInt(ring.getPartnerRingId());
@@ -6785,7 +6818,7 @@ public class PacketCreator {
         p.writeShort(chr.getFriendshipRings().size());
         for (Ring ring : chr.getFriendshipRings()) {
             p.writeInt(ring.getPartnerChrId());
-            p.writeFixedString(getRightPaddedStr(ring.getPartnerName(), '\0', 13));
+            p.writeFixedString(ring.getPartnerName(), 13);
             p.writeInt(ring.getRingId());
             p.writeInt(0);
             p.writeInt(ring.getPartnerRingId());
@@ -6808,8 +6841,8 @@ public class PacketCreator {
                 p.writeInt(ItemId.WEDDING_RING_MOONSTONE); // Engagement Ring's Outcome (doesn't matter for engagement)
                 p.writeInt(ItemId.WEDDING_RING_MOONSTONE); // Engagement Ring's Outcome (doesn't matter for engagement)
             }
-            p.writeFixedString(StringUtil.getRightPaddedStr(chr.getGender() == 0 ? chr.getName() : Character.getNameById(chr.getPartnerId()), '\0', 13));
-            p.writeFixedString(StringUtil.getRightPaddedStr(chr.getGender() == 0 ? Character.getNameById(chr.getPartnerId()) : chr.getName(), '\0', 13));
+            p.writeFixedString(chr.getGender() == 0 ? chr.getName() : Character.getNameById(chr.getPartnerId()), 13);
+            p.writeFixedString(chr.getGender() == 0 ? Character.getNameById(chr.getPartnerId()) : chr.getName(), 13);
         } else {
             p.writeShort(0);
         }
@@ -6972,9 +7005,9 @@ public class PacketCreator {
             p.writeInt(item.getSN());
             p.writeShort(item.getQuantity());
         }
-        p.writeFixedString(StringUtil.getRightPaddedStr(item.getGiftFrom(), '\0', 13));
+        p.writeFixedString(item.getGiftFrom(), 13);
         if (isGift) {
-            p.writeFixedString(StringUtil.getRightPaddedStr(giftMessage, '\0', 73));
+            p.writeFixedString(giftMessage, 73);
             return;
         }
         addExpirationTime(p, item.getExpiration());

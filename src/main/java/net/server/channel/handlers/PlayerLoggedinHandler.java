@@ -156,6 +156,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 c.disconnect(true, false);
                 return;
             }
+            c.setPacketCodePage(server.takeCharacterCodePageInTransition(cid));
 
             boolean newcomer = false;
             if (player == null) {
