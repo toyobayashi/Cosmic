@@ -39,8 +39,14 @@ public enum WZFiles {
     private static String getWzDirectory() {
         // Either provide a custom directory path through the "wz-path" property when launching the .jar, or don't provide one to use the default "wz" directory
         String propertyPath = System.getProperty("wz-path");
-        if (propertyPath != null && Files.isDirectory(Path.of(propertyPath))) {
-            return propertyPath;
+        if (propertyPath != null) {
+            Path configuredPath = Path.of(propertyPath);
+            if (!Files.isDirectory(configuredPath)) {
+                throw new IllegalArgumentException(
+                        "Configured WZ directory does not exist or is not a directory: " + configuredPath
+                );
+            }
+            return configuredPath.toString();
         }
 
         return "wz";
