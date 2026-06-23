@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import javax.script.ScriptEngine;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,33 +59,25 @@ public class ScriptEvaluationTest {
     @ParameterizedTest
     @MethodSource("eventScriptFilePaths")
     void eventScriptShouldEvaluate(String eventScriptPath) {
-        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(eventScriptPath);
-
-        assertNotNull(scriptEngine);
+        assertScriptLoads(eventScriptPath);
     }
 
     @ParameterizedTest
     @MethodSource("itemScriptFilePaths")
     void itemScriptShouldEvaluate(String itemScriptPath) {
-        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(itemScriptPath);
-
-        assertNotNull(scriptEngine);
+        assertScriptLoads(itemScriptPath);
     }
 
     @ParameterizedTest
     @MethodSource("npcScriptFilePaths")
     void npcScriptShouldEvaluate(String npcScriptPath) {
-        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(npcScriptPath);
-
-        assertNotNull(scriptEngine);
+        assertScriptLoads(npcScriptPath);
     }
 
     @ParameterizedTest
     @MethodSource("mtsEntryScriptPath")
     void mtsCustomEntryScriptShouldEvaluate(String npcScriptPath) {
-        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(npcScriptPath);
-
-        assertNotNull(scriptEngine);
+        assertScriptLoads(npcScriptPath);
     }
 
     private static List<String> mtsEntryScriptPath() {
@@ -96,24 +87,25 @@ public class ScriptEvaluationTest {
     @ParameterizedTest
     @MethodSource("portalScriptFilePaths")
     void portalScriptShouldEvaluate(String portalScriptPath) {
-        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(portalScriptPath);
-
-        assertNotNull(scriptEngine);
+        assertScriptLoads(portalScriptPath);
     }
 
     @ParameterizedTest
     @MethodSource("questScriptFilePaths")
     void questScriptShouldEvaluate(String questScriptPath) {
-        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(questScriptPath);
-
-        assertNotNull(scriptEngine);
+        assertScriptLoads(questScriptPath);
     }
 
     @ParameterizedTest
     @MethodSource("reactorScriptFilePaths")
     void reactorScriptShouldEvaluate(String reactorScriptPath) {
-        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine(reactorScriptPath);
+        assertScriptLoads(reactorScriptPath);
+    }
 
-        assertNotNull(scriptEngine);
+    private void assertScriptLoads(String scriptPath) {
+        ScriptHandle scriptHandle = scriptManager.loadScript(scriptPath);
+
+        assertNotNull(scriptHandle);
+        scriptHandle.close();
     }
 }

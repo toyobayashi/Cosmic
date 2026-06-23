@@ -55,6 +55,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractPlayerInteraction;
+import scripting.ScriptHandle;
 import scripting.event.EventInstanceManager;
 import scripting.event.EventManager;
 import scripting.npc.NPCConversationManager;
@@ -132,6 +133,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private int gmlevel;
     private Set<String> macs = new HashSet<>();
     private Map<String, ScriptEngine> engines = new HashMap<>();
+    private Map<String, ScriptHandle> scriptHandles = new HashMap<>();
     private byte characterSlots = 3;
     private byte loginattempt = 0;
     private String pin = "";
@@ -1120,6 +1122,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             }
 
             engines = null; // thanks Tochi for pointing out a NPE here
+            scriptHandles = null;
         }
     }
 
@@ -1136,6 +1139,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.hwid = null;
         this.birthday = null;
         this.engines = null;
+        this.scriptHandles = null;
         this.player = null;
     }
 
@@ -1248,6 +1252,21 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void removeScriptEngine(String name) {
         engines.remove(name);
+    }
+
+    public void setScriptHandle(String name, ScriptHandle handle) {
+        scriptHandles.put(name, handle);
+    }
+
+    public ScriptHandle getScriptHandle(String name) {
+        return scriptHandles.get(name);
+    }
+
+    public void removeScriptHandle(String name) {
+        ScriptHandle handle = scriptHandles.remove(name);
+        if (handle != null) {
+            handle.close();
+        }
     }
 
     public NPCConversationManager getCM() {
