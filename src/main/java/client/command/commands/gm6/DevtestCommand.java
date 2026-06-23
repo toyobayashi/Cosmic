@@ -5,9 +5,8 @@ import client.command.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractScriptManager;
-
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
+import scripting.ScriptHandle;
+import scripting.ScriptInvocationContext;
 import javax.script.ScriptException;
 
 public class DevtestCommand extends Command {
@@ -19,9 +18,8 @@ public class DevtestCommand extends Command {
 
     private static class DevtestScriptManager extends AbstractScriptManager {
 
-        @Override
-        public ScriptEngine getInvocableScriptEngine(String path) {
-            return super.getInvocableScriptEngine(path);
+        public ScriptHandle load(String path) {
+            return super.loadScript(path);
         }
 
     }
@@ -29,12 +27,17 @@ public class DevtestCommand extends Command {
     @Override
     public void execute(Client client, String[] params) {
         DevtestScriptManager scriptManager = new DevtestScriptManager();
-        ScriptEngine scriptEngine = scriptManager.getInvocableScriptEngine("devtest.js");
+        ScriptHandle scriptHandle = scriptManager.load("devtest.js");
+        if (scriptHandle == null) {
+            log.info("devtest.js was not found or failed to load");
+            return;
+        }
         try {
-            Invocable invocable = (Invocable) scriptEngine;
-            invocable.invokeFunction("run", client.getPlayer());
+            scriptHandle.invoke("run", ScriptInvocationContext.empty(), client.getPlayer());
         } catch (ScriptException | NoSuchMethodException e) {
             log.info("devtest.js run() threw an exception", e);
+        } finally {
+            scriptHandle.close();
         }
     }
 }

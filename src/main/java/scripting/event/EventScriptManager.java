@@ -24,10 +24,10 @@ package scripting.event;
 import net.server.channel.Channel;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractScriptManager;
-import scripting.SynchronizedInvocable;
+import scripting.ScriptHandle;
+import scripting.ScriptInvocationContext;
+import scripting.SynchronizedScriptHandle;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,19 +39,18 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class EventScriptManager extends AbstractScriptManager {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(EventScriptManager.class);
-    private static final String INJECTED_VARIABLE_NAME = "em";
     private static EventEntry fallback;
     private final Map<String, EventEntry> events = new ConcurrentHashMap<>();
     private boolean active = false;
 
     private static class EventEntry {
 
-        public EventEntry(Invocable iv, EventManager em) {
-            this.iv = iv;
+        public EventEntry(ScriptHandle handle, EventManager em) {
+            this.handle = handle;
             this.em = em;
         }
 
-        public Invocable iv;
+        public ScriptHandle handle;
         public EventManager em;
     }
 
@@ -81,7 +80,7 @@ public class EventScriptManager extends AbstractScriptManager {
     public final void init() {
         for (EventEntry entry : events.values()) {
             try {
-                entry.iv.invokeFunction("init", (Object) null);
+                entry.handle.invoke("init", ScriptInvocationContext.of("em", entry.em), (Object) null);
             } catch (Exception ex) {
                 log.error("Error on script: {}", entry.em.getName(), ex);
             }
@@ -99,16 +98,15 @@ public class EventScriptManager extends AbstractScriptManager {
         Channel channel = eventEntries.iterator().next().getValue().em.getChannelServer();
         for (Entry<String, EventEntry> entry : eventEntries) {
             String script = entry.getKey();
+            entry.getValue().handle.close();
             events.put(script, initializeEventEntry(script, channel));
         }
     }
 
     private EventEntry initializeEventEntry(String script, Channel channel) {
-        ScriptEngine engine = getInvocableScriptEngine("event/" + script + ".js");
-        Invocable iv = SynchronizedInvocable.of((Invocable) engine);
-        EventManager eventManager = new EventManager(channel, iv, script);
-        engine.put(INJECTED_VARIABLE_NAME, eventManager);
-        return new EventEntry(iv, eventManager);
+        ScriptHandle handle = SynchronizedScriptHandle.of(loadScript("event", script));
+        EventManager eventManager = new EventManager(channel, handle, script);
+        return new EventEntry(handle, eventManager);
     }
 
     // Is never being called
@@ -122,6 +120,7 @@ public class EventScriptManager extends AbstractScriptManager {
         active = false;
         for (EventEntry entry : events.values()) {
             entry.em.cancel();
+            entry.handle.close();
         }
     }
 
@@ -136,6 +135,7 @@ public class EventScriptManager extends AbstractScriptManager {
         active = false;
         for (EventEntry entry : eventEntries) {
             entry.em.cancel();
+            entry.handle.close();
         }
     }
 }

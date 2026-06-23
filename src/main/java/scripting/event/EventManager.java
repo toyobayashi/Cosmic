@@ -40,9 +40,10 @@ import server.life.LifeFactory;
 import server.life.Monster;
 import server.maps.MapleMap;
 import server.quest.Quest;
+import scripting.ScriptHandle;
+import scripting.ScriptInvocationContext;
 import tools.exceptions.EventInstanceInProgressException;
 
-import javax.script.Invocable;
 import javax.script.ScriptException;
 import java.util.*;
 import java.util.concurrent.Semaphore;
@@ -59,7 +60,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public class EventManager {
     private static final Logger log = LoggerFactory.getLogger(EventManager.class);
-    private Invocable iv;
+    private ScriptHandle handle;
     private Channel cserv;
     private World wserv;
     private Server server;
@@ -82,9 +83,9 @@ public class EventManager {
 
     private static final int maxLobbys = 8;     // an event manager holds up to this amount of concurrent lobbys
 
-    public EventManager(Channel cserv, Invocable iv, String name) {
+    public EventManager(Channel cserv, ScriptHandle handle, String name) {
         this.server = Server.getInstance();
-        this.iv = iv;
+        this.handle = handle;
         this.cserv = cserv;
         this.wserv = server.getWorld(cserv.getWorld());
         this.name = name;
@@ -103,7 +104,7 @@ public class EventManager {
         ess.dispose();
 
         try {
-            iv.invokeFunction("cancelSchedule", (Object) null);
+            invokeScriptFunction("cancelSchedule", (Object) null);
         } catch (ScriptException | NoSuchMethodException ex) {
             ex.printStackTrace();
         }
@@ -136,7 +137,7 @@ public class EventManager {
         cserv = null;
         wserv = null;
         server = null;
-        iv = null;
+        handle = null;
     }
 
     private List<Integer> convertToIntegerList(List<Object> objects) {
@@ -155,7 +156,7 @@ public class EventManager {
 
     private int getMaxLobbies() {
         try {
-            return (int) iv.invokeFunction("getMaxLobbies");
+            return (int) invokeScriptFunction("getMaxLobbies");
         } catch (ScriptException | NoSuchMethodException ex) { // they didn't define a lobby range
             return maxLobbys;
         }
@@ -168,7 +169,7 @@ public class EventManager {
     public EventScheduledFuture schedule(final String methodName, final EventInstanceManager eim, long delay) {
         Runnable r = () -> {
             try {
-                iv.invokeFunction(methodName, eim);
+                invokeScriptFunction(methodName, eim);
             } catch (ScriptException | NoSuchMethodException ex) {
                 log.error("Event script schedule", ex);
             }
@@ -183,7 +184,7 @@ public class EventManager {
     public EventScheduledFuture scheduleAtTimestamp(final String methodName, long timestamp) {
         Runnable r = () -> {
             try {
-                iv.invokeFunction(methodName, (Object) null);
+                invokeScriptFunction(methodName, (Object) null);
             } catch (ScriptException | NoSuchMethodException ex) {
                 log.error("Event script scheduleAtTimestamp", ex);
             }
@@ -201,8 +202,12 @@ public class EventManager {
         return cserv;
     }
 
-    public Invocable getIv() {
-        return iv;
+    public Object invokeScriptFunction(String name, Object... args) throws ScriptException, NoSuchMethodException {
+        return handle.invoke(name, eventContext(), args);
+    }
+
+    private ScriptInvocationContext eventContext() {
+        return ScriptInvocationContext.of("em", this);
     }
 
     public EventInstanceManager getInstance(String name) {
@@ -352,7 +357,7 @@ public class EventManager {
     }
 
     private EventInstanceManager createInstance(String name, Object... args) throws ScriptException, NoSuchMethodException {
-        return (EventInstanceManager) iv.invokeFunction(name, args);
+        return (EventInstanceManager) invokeScriptFunction(name, args);
     }
 
     private void registerEventInstance(String eventName, int lobbyId) {
@@ -697,7 +702,7 @@ public class EventManager {
                         registerEventInstance(eim.getName(), lobbyId);
                         eim.setLeader(leader);
 
-                        iv.invokeFunction("setup", eim);
+                        invokeScriptFunction("setup", eim);
                         eim.setProperty("leader", ldr);
 
                         eim.startEvent();
@@ -724,7 +729,7 @@ public class EventManager {
             return new ArrayList<>();
         }
         try {
-            Object o = iv.invokeFunction("getEligibleParty", party.getPartyMembersOnline());
+            Object o = invokeScriptFunction("getEligibleParty", party.getPartyMembersOnline());
 
             if (o instanceof PartyCharacter[] partyChrs) {
                 final List<PartyCharacter> eligibleParty = new ArrayList<>(Arrays.asList(partyChrs));
@@ -740,7 +745,7 @@ public class EventManager {
 
     public void clearPQ(EventInstanceManager eim) {
         try {
-            iv.invokeFunction("clearPQ", eim);
+            invokeScriptFunction("clearPQ", eim);
         } catch (ScriptException | NoSuchMethodException ex) {
             log.error("Event script clearPQ", ex);
         }
@@ -748,7 +753,7 @@ public class EventManager {
 
     public void clearPQ(EventInstanceManager eim, MapleMap toMap) {
         try {
-            iv.invokeFunction("clearPQ", eim, toMap);
+            invokeScriptFunction("clearPQ", eim, toMap);
         } catch (ScriptException | NoSuchMethodException ex) {
             log.error("Event script clearPQ", ex);
         }

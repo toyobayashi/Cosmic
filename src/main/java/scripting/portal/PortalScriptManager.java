@@ -25,10 +25,10 @@ import client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractScriptManager;
+import scripting.ScriptHandle;
+import scripting.ScriptInvocationContext;
 import server.maps.Portal;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,38 +37,37 @@ public class PortalScriptManager extends AbstractScriptManager {
     private static final Logger log = LoggerFactory.getLogger(PortalScriptManager.class);
     private static final PortalScriptManager instance = new PortalScriptManager();
 
-    private final Map<String, PortalScript> scripts = new HashMap<>();
+    private final Map<String, ScriptHandle> scripts = new HashMap<>();
 
     public static PortalScriptManager getInstance() {
         return instance;
     }
 
-    private PortalScript getPortalScript(String scriptName) throws ScriptException {
-        String scriptPath = "portal/" + scriptName + ".js";
-        PortalScript script = scripts.get(scriptPath);
-        if (script != null) {
-            return script;
+    private ScriptHandle getPortalScript(String scriptName) throws ScriptException {
+        ScriptHandle handle = scripts.get(scriptName);
+        if (handle != null) {
+            return handle;
         }
 
-        ScriptEngine engine = getInvocableScriptEngine(scriptPath);
-        if (!(engine instanceof Invocable iv)) {
+        handle = loadScript("portal", scriptName);
+        if (handle == null) {
             return null;
         }
 
-        script = iv.getInterface(PortalScript.class);
-        if (script == null) {
+        if (!handle.hasCallback("enter")) {
             throw new ScriptException(String.format("Portal script \"%s\" fails to implement the PortalScript interface", scriptName));
         }
 
-        scripts.put(scriptPath, script);
-        return script;
+        scripts.put(scriptName, handle);
+        return handle;
     }
 
     public boolean executePortalScript(Portal portal, Client c) {
         try {
-            PortalScript script = getPortalScript(portal.getScriptName());
-            if (script != null) {
-                return script.enter(new PortalPlayerInteraction(c, portal));
+            ScriptHandle handle = getPortalScript(portal.getScriptName());
+            if (handle != null) {
+                Object result = handle.invoke("enter", ScriptInvocationContext.of("pi", new PortalPlayerInteraction(c, portal)));
+                return result instanceof Boolean entered && entered;
             }
         } catch (Exception e) {
             log.warn("Portal script error in: {}", portal.getScriptName(), e);
@@ -77,6 +76,9 @@ public class PortalScriptManager extends AbstractScriptManager {
     }
 
     public void reloadPortalScripts() {
+        for (ScriptHandle handle : scripts.values()) {
+            handle.close();
+        }
         scripts.clear();
     }
 }

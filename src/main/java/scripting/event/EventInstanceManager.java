@@ -226,7 +226,7 @@ public class EventInstanceManager {
 
     public Object invokeScriptFunction(String name, Object... args) throws ScriptException, NoSuchMethodException {
         if (!disposed) {
-            return em.getIv().invokeFunction(name, args);
+            return em.invokeScriptFunction(name, args);
         } else {
             return null;
         }

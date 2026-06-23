@@ -74,7 +74,6 @@ import tools.DatabaseConnection;
 import tools.HexTool;
 import tools.PacketCreator;
 
-import javax.script.ScriptEngine;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -132,7 +131,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private volatile long lastPong;
     private int gmlevel;
     private Set<String> macs = new HashSet<>();
-    private Map<String, ScriptEngine> engines = new HashMap<>();
     private Map<String, ScriptHandle> scriptHandles = new HashMap<>();
     private byte characterSlots = 3;
     private byte loginattempt = 0;
@@ -1121,7 +1119,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 updateLoginState(Client.LOGIN_NOTLOGGEDIN);
             }
 
-            engines = null; // thanks Tochi for pointing out a NPE here
+            closeScriptHandles();
             scriptHandles = null;
         }
     }
@@ -1138,7 +1136,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.macs = null;
         this.hwid = null;
         this.birthday = null;
-        this.engines = null;
+        closeScriptHandles();
         this.scriptHandles = null;
         this.player = null;
     }
@@ -1242,18 +1240,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         gmlevel = level;
     }
 
-    public void setScriptEngine(String name, ScriptEngine e) {
-        engines.put(name, e);
-    }
-
-    public ScriptEngine getScriptEngine(String name) {
-        return engines.get(name);
-    }
-
-    public void removeScriptEngine(String name) {
-        engines.remove(name);
-    }
-
     public void setScriptHandle(String name, ScriptHandle handle) {
         scriptHandles.put(name, handle);
     }
@@ -1267,6 +1253,17 @@ public class Client extends ChannelInboundHandlerAdapter {
         if (handle != null) {
             handle.close();
         }
+    }
+
+    private void closeScriptHandles() {
+        if (scriptHandles == null) {
+            return;
+        }
+
+        for (ScriptHandle handle : scriptHandles.values()) {
+            handle.close();
+        }
+        scriptHandles.clear();
     }
 
     public NPCConversationManager getCM() {
