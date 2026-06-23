@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ScriptEvaluationTest {
     private AbstractScriptManager scriptManager = new AbstractScriptManager() {};
@@ -118,6 +119,15 @@ public class ScriptEvaluationTest {
         try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
             assertNotNull(handle);
             assertEquals("ok", handle.invoke("start", ScriptInvocationContext.empty()));
+        }
+    }
+
+    @Test
+    void esmNpcScriptExportsActionCallback() {
+        try (ScriptHandle handle = scriptManager.loadScript("npc/9000020.js")) {
+            assertNotNull(handle);
+            assertTrue(handle.hasCallback("start"));
+            assertTrue(handle.hasCallback("action"));
         }
     }
 

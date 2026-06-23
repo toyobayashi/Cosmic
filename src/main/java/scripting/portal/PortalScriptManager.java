@@ -66,7 +66,8 @@ public class PortalScriptManager extends AbstractScriptManager {
         try {
             ScriptHandle handle = getPortalScript(portal.getScriptName());
             if (handle != null) {
-                Object result = handle.invoke("enter", ScriptInvocationContext.of("pi", new PortalPlayerInteraction(c, portal)));
+                PortalPlayerInteraction interaction = new PortalPlayerInteraction(c, portal);
+                Object result = handle.invoke("enter", ScriptInvocationContext.of("pi", interaction), interaction);
                 return result instanceof Boolean entered && entered;
             }
         } catch (Exception e) {

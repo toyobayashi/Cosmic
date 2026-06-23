@@ -19,7 +19,7 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-status = -1;
+let status = -1;
 
 
 var travelFrom = [777777777, 541000000];
@@ -40,9 +40,10 @@ var travelDescription2 = ["Check out the female shaman serving the Mushroom God,
 var travelType;
 var travelStatus;
 
-function start() {
-    travelStatus = getTravelingStatus(cm.getPlayer().getMapId());
-    action(1, 0, 0);
+export function start(ctx) {
+    console.log(111)
+    travelStatus = getTravelingStatus(ctx.cm.getPlayer().getMapId());
+    action(ctx, 1, 0, 0);
 }
 
 function getTravelingStatus(mapid) {
@@ -65,7 +66,8 @@ function getTravelType(mapid) {
     return 0;
 }
 
-function action(mode, type, selection) {
+export function action(ctx, mode, type, selection) {
+    var cm = ctx.cm;
     status++;
     if (mode != 1) {
         if (mode == 0 && status == 4) {

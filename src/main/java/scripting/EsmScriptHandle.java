@@ -4,11 +4,16 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.SourceSection;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.io.IOAccess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.ScriptException;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,11 +23,14 @@ import java.util.Set;
 
 public final class EsmScriptHandle implements ScriptHandle {
     private static final String MODULE_MIME_TYPE = "application/javascript+module";
+    private static final Logger scriptLog = LoggerFactory.getLogger("scripting.js");
 
     private final Path entryPath;
     private final Context context;
     private final Value namespace;
     private boolean closed;
+    private boolean closeRequested;
+    private int activeInvocations;
 
     private EsmScriptHandle(Path entryPath, Context context, Value namespace) {
         this.entryPath = entryPath;
@@ -31,6 +39,14 @@ public final class EsmScriptHandle implements ScriptHandle {
     }
 
     public static EsmScriptHandle load(Path entryPath) {
+        return load(entryPath, new LoggingOutputStream(scriptLog, false), new LoggingOutputStream(scriptLog, true));
+    }
+
+    static EsmScriptHandle loadForTesting(Path entryPath, OutputStream out, OutputStream err) {
+        return load(entryPath, out, err);
+    }
+
+    private static EsmScriptHandle load(Path entryPath, OutputStream out, OutputStream err) {
         Objects.requireNonNull(entryPath);
         Path realEntryPath = realPath(entryPath, entryPath);
         validateModuleGraph(realEntryPath, new HashSet<>());
@@ -39,6 +55,8 @@ public final class EsmScriptHandle implements ScriptHandle {
                 .allowHostAccess(HostAccess.ALL)
                 .allowHostClassLookup(className -> true)
                 .allowIO(IOAccess.ALL)
+                .out(out)
+                .err(err)
                 .allowExperimentalOptions(true)
                 .option("js.esm-eval-returns-exports", "true")
                 .build();
@@ -58,24 +76,32 @@ public final class EsmScriptHandle implements ScriptHandle {
     @Override
     public Object invoke(String callback, ScriptInvocationContext invocationContext, Object... arguments)
             throws ScriptException, NoSuchMethodException {
-        ensureOpen();
-        Value exportedCallback = namespace.getMember(callback);
-        if (exportedCallback == null || !exportedCallback.canExecute()) {
-            throw new NoSuchMethodException("ESM script " + entryPath + " does not export function " + callback);
-        }
-
-        Object[] esmArguments = new Object[arguments.length + 1];
-        esmArguments[0] = context.asValue(invocationContext.toProxyObject());
-        System.arraycopy(arguments, 0, esmArguments, 1, arguments.length);
-
+        boolean entered = false;
         try {
+            enterInvocation();
+            entered = true;
+            Value exportedCallback = namespace.getMember(callback);
+            if (exportedCallback == null || !exportedCallback.canExecute()) {
+                throw new NoSuchMethodException("ESM script " + entryPath + " does not export function " + callback);
+            }
+
+            Object[] esmArguments = new Object[arguments.length + 1];
+            esmArguments[0] = context.asValue(invocationContext.toProxyObject());
+            System.arraycopy(arguments, 0, esmArguments, 1, arguments.length);
+
             Value result = exportedCallback.execute(esmArguments);
             return result.isNull() ? null : result.as(Object.class);
         } catch (PolyglotException e) {
-            ScriptException scriptException = new ScriptException(
-                    "Failed to invoke ESM callback " + callback + " in " + entryPath + ": " + e.getMessage());
+            ScriptException scriptException = toScriptException(
+                    "Failed to invoke ESM callback " + callback + " in " + entryPath,
+                    e,
+                    entryPath);
             scriptException.initCause(e);
             throw scriptException;
+        } finally {
+            if (entered) {
+                exitInvocation();
+            }
         }
     }
 
@@ -88,8 +114,20 @@ public final class EsmScriptHandle implements ScriptHandle {
 
     @Override
     public void close() {
-        if (!closed) {
-            closed = true;
+        boolean shouldClose = false;
+        synchronized (this) {
+            if (closed || closeRequested) {
+                return;
+            }
+            if (activeInvocations > 0) {
+                closeRequested = true;
+            } else {
+                closed = true;
+                shouldClose = true;
+            }
+        }
+
+        if (shouldClose) {
             context.close();
         }
     }
@@ -101,6 +139,26 @@ public final class EsmScriptHandle implements ScriptHandle {
     private void ensureOpen() {
         if (closed) {
             throw new IllegalStateException("ESM script handle is closed: " + entryPath);
+        }
+    }
+
+    private synchronized void enterInvocation() {
+        ensureOpen();
+        activeInvocations++;
+    }
+
+    private void exitInvocation() {
+        boolean shouldClose = false;
+        synchronized (this) {
+            activeInvocations--;
+            if (activeInvocations == 0 && closeRequested && !closed) {
+                closed = true;
+                shouldClose = true;
+            }
+        }
+
+        if (shouldClose) {
+            context.close();
         }
     }
 
@@ -160,6 +218,99 @@ public final class EsmScriptHandle implements ScriptHandle {
     private static boolean isJavaScriptPath(Path path) {
         String filename = path.getFileName().toString();
         return filename.endsWith(".js") || filename.endsWith(".mjs");
+    }
+
+    private static ScriptException toScriptException(String prefix, PolyglotException exception, Path fallbackPath) {
+        SourceSection sourceLocation = sourceLocation(exception);
+        String location = locationString(sourceLocation);
+        String reason = prefix + (location.isEmpty() ? "" : " at " + location) + ": " + exception.getMessage();
+        if (sourceLocation == null || !sourceLocation.isAvailable()) {
+            return new ScriptException(reason, fallbackPath.toString(), -1);
+        }
+
+        String fileName = sourceName(sourceLocation, fallbackPath);
+        return new ScriptException(reason, fileName, sourceLocation.getStartLine(), sourceLocation.getStartColumn());
+    }
+
+    private static SourceSection sourceLocation(PolyglotException exception) {
+        SourceSection sourceLocation = exception.getSourceLocation();
+        if (sourceLocation != null && sourceLocation.isAvailable()) {
+            return sourceLocation;
+        }
+
+        for (PolyglotException.StackFrame frame : exception.getPolyglotStackTrace()) {
+            if (!frame.isGuestFrame()) {
+                continue;
+            }
+            SourceSection frameLocation = frame.getSourceLocation();
+            if (frameLocation != null && frameLocation.isAvailable()) {
+                return frameLocation;
+            }
+        }
+
+        return sourceLocation;
+    }
+
+    private static String locationString(SourceSection sourceLocation) {
+        if (sourceLocation == null || !sourceLocation.isAvailable()) {
+            return "";
+        }
+
+        return sourceName(sourceLocation, null) + ":" + sourceLocation.getStartLine() + ":" + sourceLocation.getStartColumn();
+    }
+
+    private static String sourceName(SourceSection sourceLocation, Path fallbackPath) {
+        Source source = sourceLocation.getSource();
+        if (source != null) {
+            String path = source.getPath();
+            if (path != null) {
+                return path;
+            }
+            String name = source.getName();
+            if (name != null) {
+                return name;
+            }
+        }
+        return fallbackPath == null ? "<unknown>" : fallbackPath.toString();
+    }
+
+    private static final class LoggingOutputStream extends OutputStream {
+        private final Logger logger;
+        private final boolean error;
+        private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        private LoggingOutputStream(Logger logger, boolean error) {
+            this.logger = logger;
+            this.error = error;
+        }
+
+        @Override
+        public synchronized void write(int value) {
+            if (value == '\n') {
+                logBufferedLine();
+            } else if (value != '\r') {
+                buffer.write(value);
+            }
+        }
+
+        @Override
+        public synchronized void flush() {
+            logBufferedLine();
+        }
+
+        private void logBufferedLine() {
+            if (buffer.size() == 0) {
+                return;
+            }
+
+            String line = buffer.toString(StandardCharsets.UTF_8);
+            buffer.reset();
+            if (error) {
+                logger.error(line);
+            } else {
+                logger.info(line);
+            }
+        }
     }
 
     private static final class ModuleScanner {

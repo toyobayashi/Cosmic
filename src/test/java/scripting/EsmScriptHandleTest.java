@@ -5,11 +5,14 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.script.ScriptException;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -102,6 +105,60 @@ class EsmScriptHandleTest {
         }
     }
 
+    @Test
+    void invocationErrorsExposeGuestSourceLocation(@TempDir Path tempDir) throws Exception {
+        Path entry = write(tempDir.resolve("entry.mjs"), """
+                export function start(ctx) {
+                    const value = 1;
+                    throw new Error('boom');
+                }
+                """);
+
+        try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
+            ScriptException exception = assertThrows(
+                    ScriptException.class,
+                    () -> handle.invoke("start", ScriptInvocationContext.empty()));
+
+            assertEquals(entry.toRealPath().toString(), exception.getFileName());
+            assertEquals(3, exception.getLineNumber());
+            assertTrue(exception.getMessage().contains("entry.mjs:3"));
+        }
+    }
+
+    @Test
+    void consoleLogWritesToConfiguredOutput(@TempDir Path tempDir) throws Exception {
+        Path entry = write(tempDir.resolve("entry.mjs"), """
+                export function start(ctx) {
+                    console.log('hello from js');
+                }
+                """);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try (ScriptHandle handle = EsmScriptHandle.loadForTesting(entry, out, new ByteArrayOutputStream())) {
+            handle.invoke("start", ScriptInvocationContext.empty());
+        }
+
+        assertTrue(out.toString(StandardCharsets.UTF_8).contains("hello from js"));
+    }
+
+    @Test
+    void closeDuringInvocationIsDeferredUntilResultIsRead(@TempDir Path tempDir) throws Exception {
+        Path entry = write(tempDir.resolve("entry.mjs"), """
+                export function action(ctx) {
+                    ctx.cm.dispose();
+                    return 'disposed';
+                }
+                """);
+        AtomicReference<EsmScriptHandle> currentHandle = new AtomicReference<>();
+        ClosingHost host = new ClosingHost(currentHandle);
+
+        EsmScriptHandle handle = EsmScriptHandle.load(entry);
+        currentHandle.set(handle);
+
+        assertEquals("disposed", handle.invoke("action", ScriptInvocationContext.of("cm", host)));
+        assertTrue(handle.isClosedForTesting());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "export const load = import('./later.mjs');",
@@ -120,5 +177,17 @@ class EsmScriptHandleTest {
     private static Path write(Path path, String source) throws IOException {
         Files.writeString(path, source, StandardCharsets.UTF_8);
         return path;
+    }
+
+    public static final class ClosingHost {
+        private final AtomicReference<EsmScriptHandle> handle;
+
+        private ClosingHost(AtomicReference<EsmScriptHandle> handle) {
+            this.handle = handle;
+        }
+
+        public void dispose() {
+            handle.get().close();
+        }
     }
 }

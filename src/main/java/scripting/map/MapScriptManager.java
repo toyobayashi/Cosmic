@@ -64,7 +64,8 @@ public class MapScriptManager extends AbstractScriptManager {
         ScriptHandle handle = scripts.get(mapScriptPath);
         if (handle != null) {
             try {
-                handle.invoke("start", ScriptInvocationContext.of("msm", new MapScriptMethods(c)));
+                MapScriptMethods methods = new MapScriptMethods(c);
+                handle.invoke("start", ScriptInvocationContext.of("msm", methods), methods);
                 return true;
             } catch (final ScriptException | NoSuchMethodException e) {
                 e.printStackTrace();
@@ -78,7 +79,8 @@ public class MapScriptManager extends AbstractScriptManager {
             }
 
             scripts.put(mapScriptPath, handle);
-            handle.invoke("start", ScriptInvocationContext.of("msm", new MapScriptMethods(c)));
+            MapScriptMethods methods = new MapScriptMethods(c);
+            handle.invoke("start", ScriptInvocationContext.of("msm", methods), methods);
             return true;
         } catch (final Exception e) {
             log.error("Error running map script {}", mapScriptPath, e);
