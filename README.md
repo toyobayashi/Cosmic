@@ -131,6 +131,9 @@ That's it, have fun playing around in game!
 ## Advanced concepts
 Some slightly more advanced concepts that might be useful once you're up and running.
 
+### Scripting
+* [ESM script authoring](docs/scripting-esm.md) explains legacy Script mode, ESM named exports, `ctx`, imports, and migration rules for game scripts.
+
 ### Host on remote server
 You don't have to host the server on your local machine to play. It's possible to host on a remote server such as a VPS or a dedicated server.
 

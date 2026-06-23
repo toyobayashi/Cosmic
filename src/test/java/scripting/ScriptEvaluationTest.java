@@ -2,15 +2,19 @@ package scripting;
 
 import config.YamlConfig;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ScriptEvaluationTest {
@@ -100,6 +104,21 @@ public class ScriptEvaluationTest {
     @MethodSource("reactorScriptFilePaths")
     void reactorScriptShouldEvaluate(String reactorScriptPath) {
         assertScriptLoads(reactorScriptPath);
+    }
+
+    @Test
+    void esmScriptWithContextAndStaticImportEvaluates(@TempDir Path tempDir) throws Exception {
+        Files.writeString(tempDir.resolve("helpers.js"), "export const message = 'ok';", StandardCharsets.UTF_8);
+        Path entry = tempDir.resolve("entry.mjs");
+        Files.writeString(entry, """
+                import { message } from './helpers.js';
+                export function start(ctx) { return message; }
+                """, StandardCharsets.UTF_8);
+
+        try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
+            assertNotNull(handle);
+            assertEquals("ok", handle.invoke("start", ScriptInvocationContext.empty()));
+        }
     }
 
     private void assertScriptLoads(String scriptPath) {
