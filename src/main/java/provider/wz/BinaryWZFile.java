@@ -13,6 +13,8 @@ import provider.Data;
 import provider.DataDirectoryEntry;
 import provider.DataProvider;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +40,13 @@ public class BinaryWZFile implements DataProvider {
      * Uses a static cache so the same physical file is parsed at most once.
      */
     public BinaryWZFile(String wzFilePath) {
+        Path wzPath = Path.of(wzFilePath);
+        if (!Files.isRegularFile(wzPath)) {
+            throw new IllegalArgumentException(
+                    "WZ file does not exist or is not a regular file: " + wzPath
+            );
+        }
+
         synchronized (wzFileCache) {
             wzFile = wzFileCache.computeIfAbsent(wzFilePath, path -> {
                 log.info("Parsing WZ file: {}", path);
