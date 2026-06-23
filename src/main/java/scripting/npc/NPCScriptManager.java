@@ -27,11 +27,11 @@ import net.server.world.PartyCharacter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractScriptManager;
+import scripting.ScriptHandle;
+import scripting.ScriptInvocationContext;
 import server.ItemInformationProvider.ScriptedItem;
 import tools.PacketCreator;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.util.HashMap;
 import java.util.List;
@@ -45,19 +45,19 @@ public class NPCScriptManager extends AbstractScriptManager {
     private static final NPCScriptManager instance = new NPCScriptManager();
 
     private final Map<Client, NPCConversationManager> cms = new HashMap<>();
-    private final Map<Client, Invocable> scripts = new HashMap<>();
+    private final Map<Client, ScriptHandle> scripts = new HashMap<>();
 
     public static NPCScriptManager getInstance() {
         return instance;
     }
 
     public boolean isNpcScriptAvailable(Client c, String fileName) {
-        ScriptEngine engine = null;
+        ScriptHandle handle = null;
         if (fileName != null) {
-            engine = getInvocableScriptEngine("npc/" + fileName + ".js", c);
+            handle = loadScript("npc", fileName, c);
         }
 
-        return engine != null;
+        return handle != null;
     }
 
     public boolean start(Client c, int npc, Character chr) {
@@ -88,19 +88,17 @@ public class NPCScriptManager extends AbstractScriptManager {
                 return;
             }
             cms.put(c, cm);
-            ScriptEngine engine = getInvocableScriptEngine("npc/" + filename + ".js", c);
+            ScriptHandle handle = loadScript("npc", filename, c);
 
-            if (engine == null) {
+            if (handle == null) {
                 c.getPlayer().dropMessage(1, "NPC " + npc + " is uncoded.");
                 cm.dispose();
                 return;
             }
-            engine.put("cm", cm);
 
-            Invocable invocable = (Invocable) engine;
-            scripts.put(c, invocable);
+            scripts.put(c, handle);
             try {
-                invocable.invokeFunction("start", chrs);
+                handle.invoke("start", ScriptInvocationContext.of("cm", cm), chrs);
             } catch (final NoSuchMethodException nsme) {
                 nsme.printStackTrace();
             }
@@ -119,34 +117,32 @@ public class NPCScriptManager extends AbstractScriptManager {
             }
             if (c.canClickNPC()) {
                 cms.put(c, cm);
-                ScriptEngine engine = null;
+                ScriptHandle handle = null;
                 if (!itemScript) {
                     if (fileName != null) {
-                        engine = getInvocableScriptEngine("npc/" + fileName + ".js", c);
+                        handle = loadScript("npc", fileName, c);
                     }
                 } else {
                     if (fileName != null) {     // thanks MiLin for drafting NPC-based item scripts
-                        engine = getInvocableScriptEngine("item/" + fileName + ".js", c);
+                        handle = loadScript("item", fileName, c);
                     }
                 }
-                if (engine == null) {
-                    engine = getInvocableScriptEngine("npc/" + npc + ".js", c);
+                if (handle == null) {
+                    handle = loadScript("npc", String.valueOf(npc), c);
                     cm.resetItemScript();
                 }
-                if (engine == null) {
+                if (handle == null) {
                     dispose(c);
                     return false;
                 }
-                engine.put(engineName, cm);
 
-                Invocable iv = (Invocable) engine;
-                scripts.put(c, iv);
+                scripts.put(c, handle);
                 c.setClickedNPC();
                 try {
-                    iv.invokeFunction("start");
+                    handle.invoke("start", ScriptInvocationContext.of(engineName, cm));
                 } catch (final NoSuchMethodException nsme) {
                     try {
-                        iv.invokeFunction("start", chr);
+                        handle.invoke("start", ScriptInvocationContext.of(engineName, cm), chr);
                     } catch (final NoSuchMethodException nsma) {
                         nsma.printStackTrace();
                     }
@@ -164,11 +160,13 @@ public class NPCScriptManager extends AbstractScriptManager {
     }
 
     public void action(Client c, byte mode, byte type, int selection) {
-        Invocable iv = scripts.get(c);
-        if (iv != null) {
+        ScriptHandle handle = scripts.get(c);
+        if (handle != null) {
             try {
                 c.setClickedNPC();
-                iv.invokeFunction("action", mode, type, selection);
+                NPCConversationManager cm = getCM(c);
+                String engineName = cm != null && cm.isItemScript() ? "im" : "cm";
+                handle.invoke("action", ScriptInvocationContext.of(engineName, cm), mode, type, selection);
             } catch (ScriptException | NoSuchMethodException t) {
                 if (getCM(c) != null) {
                     log.error("Error performing NPC script action for npc: {}", getCM(c).getNpc(), t);
@@ -187,9 +185,9 @@ public class NPCScriptManager extends AbstractScriptManager {
 
         String scriptFolder = (cm.isItemScript() ? "item" : "npc");
         if (cm.getScriptName() != null) {
-            resetContext(scriptFolder + "/" + cm.getScriptName() + ".js", c);
+            resetContext(scriptFolder, cm.getScriptName(), c);
         } else {
-            resetContext(scriptFolder + "/" + cm.getNpc() + ".js", c);
+            resetContext(scriptFolder, String.valueOf(cm.getNpc()), c);
         }
 
         c.getPlayer().flushDelayedUpdateQuests();

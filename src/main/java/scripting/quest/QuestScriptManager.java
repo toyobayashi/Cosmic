@@ -27,10 +27,10 @@ import constants.game.GameConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractScriptManager;
+import scripting.ScriptHandle;
+import scripting.ScriptInvocationContext;
 import server.quest.Quest;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,19 +42,19 @@ public class QuestScriptManager extends AbstractScriptManager {
     private static final QuestScriptManager instance = new QuestScriptManager();
 
     private final Map<Client, QuestActionManager> qms = new HashMap<>();
-    private final Map<Client, Invocable> scripts = new HashMap<>();
+    private final Map<Client, ScriptHandle> scripts = new HashMap<>();
 
     public static QuestScriptManager getInstance() {
         return instance;
     }
 
-    private ScriptEngine getQuestScriptEngine(Client c, short questid) {
-        ScriptEngine engine = getInvocableScriptEngine("quest/" + questid + ".js", c);
-        if (engine == null && GameConstants.isMedalQuest(questid)) {
-            engine = getInvocableScriptEngine("quest/medalQuest.js", c);   // start generic medal quest
+    private ScriptHandle getQuestScriptHandle(Client c, short questid) {
+        ScriptHandle handle = loadScript("quest", String.valueOf(questid), c);
+        if (handle == null && GameConstants.isMedalQuest(questid)) {
+            handle = loadScript("quest", "medalQuest", c);   // start generic medal quest
         }
 
-        return engine;
+        return handle;
     }
 
     public void start(Client c, short questid, int npc) {
@@ -72,19 +72,16 @@ public class QuestScriptManager extends AbstractScriptManager {
                     return;
                 }
 
-                ScriptEngine engine = getQuestScriptEngine(c, questid);
-                if (engine == null) {
+                ScriptHandle handle = getQuestScriptHandle(c, questid);
+                if (handle == null) {
                     log.warn("START Quest {} is uncoded.", questid);
                     qm.dispose();
                     return;
                 }
 
-                engine.put("qm", qm);
-
-                Invocable iv = (Invocable) engine;
-                scripts.put(c, iv);
+                scripts.put(c, handle);
                 c.setClickedNPC();
-                iv.invokeFunction("start", (byte) 1, (byte) 0, 0);
+                handle.invoke("start", ScriptInvocationContext.of("qm", qm), (byte) 1, (byte) 0, 0);
             }
         } catch (final Throwable t) {
             log.error("Error starting quest script: {}", questid, t);
@@ -93,11 +90,11 @@ public class QuestScriptManager extends AbstractScriptManager {
     }
 
     public void start(Client c, byte mode, byte type, int selection) {
-        Invocable iv = scripts.get(c);
-        if (iv != null) {
+        ScriptHandle handle = scripts.get(c);
+        if (handle != null) {
             try {
                 c.setClickedNPC();
-                iv.invokeFunction("start", mode, type, selection);
+                handle.invoke("start", ScriptInvocationContext.of("qm", getQM(c)), mode, type, selection);
             } catch (final Exception e) {
                 log.error("Error starting quest script: {}", getQM(c).getQuest(), e);
                 dispose(c);
@@ -124,19 +121,16 @@ public class QuestScriptManager extends AbstractScriptManager {
                     return;
                 }
 
-                ScriptEngine engine = getQuestScriptEngine(c, questid);
-                if (engine == null) {
+                ScriptHandle handle = getQuestScriptHandle(c, questid);
+                if (handle == null) {
                     log.warn("END Quest {} is uncoded.", questid);
                     qm.dispose();
                     return;
                 }
 
-                engine.put("qm", qm);
-
-                Invocable iv = (Invocable) engine;
-                scripts.put(c, iv);
+                scripts.put(c, handle);
                 c.setClickedNPC();
-                iv.invokeFunction("end", (byte) 1, (byte) 0, 0);
+                handle.invoke("end", ScriptInvocationContext.of("qm", qm), (byte) 1, (byte) 0, 0);
             }
         } catch (final Throwable t) {
             log.error("Error starting quest script: {}", questid, t);
@@ -145,11 +139,11 @@ public class QuestScriptManager extends AbstractScriptManager {
     }
 
     public void end(Client c, byte mode, byte type, int selection) {
-        Invocable iv = scripts.get(c);
-        if (iv != null) {
+        ScriptHandle handle = scripts.get(c);
+        if (handle != null) {
             try {
                 c.setClickedNPC();
-                iv.invokeFunction("end", mode, type, selection);
+                handle.invoke("end", ScriptInvocationContext.of("qm", getQM(c)), mode, type, selection);
             } catch (final Exception e) {
                 log.error("Error ending quest script: {}", getQM(c).getQuest(), e);
                 dispose(c);
@@ -166,19 +160,16 @@ public class QuestScriptManager extends AbstractScriptManager {
             if (c.canClickNPC()) {
                 qms.put(c, qm);
 
-                ScriptEngine engine = getQuestScriptEngine(c, questid);
-                if (engine == null) {
+                ScriptHandle handle = getQuestScriptHandle(c, questid);
+                if (handle == null) {
                     //FilePrinter.printError(FilePrinter.QUEST_UNCODED, "RAISE Quest " + questid + " is uncoded.");
                     qm.dispose();
                     return;
                 }
 
-                engine.put("qm", qm);
-
-                Invocable iv = (Invocable) engine;
-                scripts.put(c, iv);
+                scripts.put(c, handle);
                 c.setClickedNPC();
-                iv.invokeFunction("raiseOpen");
+                handle.invoke("raiseOpen", ScriptInvocationContext.of("qm", qm));
             }
         } catch (final Throwable t) {
             log.error("Error during quest script raiseOpen for quest: {}", questid, t);
@@ -190,7 +181,7 @@ public class QuestScriptManager extends AbstractScriptManager {
         qms.remove(c);
         scripts.remove(c);
         c.getPlayer().setNpcCooldown(System.currentTimeMillis());
-        resetContext("quest/" + qm.getQuest() + ".js", c);
+        resetContext("quest", String.valueOf(qm.getQuest()), c);
         c.getPlayer().flushDelayedUpdateQuests();
     }
 
