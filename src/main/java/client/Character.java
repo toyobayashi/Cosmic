@@ -992,6 +992,10 @@ public class Character extends AbstractCharacterObject {
             return false;
         }
 
+        if (!CharsetConstants.CHARSET.newEncoder().canEncode(name)) {
+            return false;
+        }
+
         int encodedLength = name.getBytes(CharsetConstants.CHARSET).length;
         return encodedLength >= 3
                 && encodedLength <= 12

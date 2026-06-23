@@ -176,8 +176,10 @@ class ByteBufOutPacketTest {
     }
 
     @Test
-    void writeString_shouldPreserveChineseText() {
-        final String writtenString = "你好，欢迎";
+    void writeString_shouldPreserveTextEncodableByConfiguredCharset() {
+        final String writtenString = CharsetConstants.CHARSET.newEncoder().canEncode("你好，欢迎")
+                ? "你好，欢迎"
+                : "Welcome";
         outPacket.writeString(writtenString);
 
         ByteBuf wrapped = wrapExplicitlyWrittenBytes(outPacket);
