@@ -108,7 +108,7 @@ public class ScriptEvaluationTest {
     }
 
     @Test
-    void esmScriptWithContextAndStaticImportEvaluates(@TempDir Path tempDir) throws Exception {
+    void moduleScriptWithContextAndStaticImportEvaluates(@TempDir Path tempDir) throws Exception {
         Files.writeString(tempDir.resolve("helpers.js"), "export const message = 'ok';", StandardCharsets.UTF_8);
         Path entry = tempDir.resolve("entry.mjs");
         Files.writeString(entry, """
@@ -116,7 +116,7 @@ public class ScriptEvaluationTest {
                 export function start(ctx) { return message; }
                 """, StandardCharsets.UTF_8);
 
-        try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
+        try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
             assertNotNull(handle);
             assertEquals("ok", handle.invoke("start", ScriptInvocationContext.empty()));
         }

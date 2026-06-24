@@ -70,7 +70,7 @@ Legacy scripts keep their exact current behavior. Managers inject `cm`, `qm`, `r
 
 ### ESM mode
 
-ESM callbacks are named exports. The first parameter is always `ctx`; remaining parameters retain the old callback's business arguments.
+module callbacks are named exports. The first parameter is always `ctx`; remaining parameters retain the old callback's business arguments.
 
 ```js
 // NPC
@@ -85,7 +85,7 @@ export function action(ctx, mode, type, selection) {
 
 `ctx` is a fresh host-provided JavaScript object for each callback invocation. Its members are:
 
-| Script kind | Context property | ESM callback shape |
+| Script kind | Context property | module callback shape |
 | --- | --- | --- |
 | NPC | `ctx.cm` | `start(ctx)`, `action(ctx, mode, type, selection)` |
 | Item | `ctx.im` or `ctx.cm`, matching the existing item flow | Existing callback name with `ctx` first |
@@ -119,7 +119,7 @@ interface ScriptHandle extends AutoCloseable {
 The manager always calls `invoke(callback, ctx, args...)`.
 
 - `LegacyScriptHandle` wraps the existing `ScriptEngine`/`Invocable`, binds legacy globals, drops `ctx`, and invokes the legacy global callback with only `args`.
-- `EsmScriptHandle` owns a Graal Polyglot `Context`, evaluates the entry as module `Source`, and invokes the named export with the JavaScript `ctx` object followed by `args`.
+- `ModuleScriptHandle` owns a Graal Polyglot `Context`, evaluates the entry as module `Source`, and invokes the named export with the JavaScript `ctx` object followed by `args`.
 
 `ScriptInvocationContext` creates the ESM `ctx` value with `ProxyObject.fromMap(...)`; property lookup such as `ctx.cm` returns the existing Java host object. The map is newly created for each invocation and is not a global binding.
 
@@ -127,7 +127,7 @@ Portal must replace its `Invocable.getInterface(PortalScript.class)` use with `S
 
 ### ESM runtime
 
-`EsmScriptHandle` uses the Graal Polyglot API rather than JSR-223:
+`ModuleScriptHandle` uses the Graal Polyglot API rather than JSR-223:
 
 - Build a `Context` for language `"js"` with host access and host class lookup matching the current `polyglot.js.allowHostAccess` and `polyglot.js.allowHostClassLookup` behavior.
 - Load the entry using a file-backed `Source` marked as `application/javascript+module`, preserving its absolute URI for native relative-module resolution.

@@ -17,13 +17,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AbstractScriptManagerTest {
     @Test
     void loadsExtensionlessLegacyScriptThroughHandle(@TempDir Path tempDir) throws Exception {
-        write(tempDir.resolve("npc").resolve("entry.js"), "function start() { return 'legacy'; }");
+        Path entry = tempDir.resolve("npc").resolve("entry.js");
+        write(entry, "function start() { return 'legacy:' + process.argv[1]; }");
         TestScriptManager manager = new TestScriptManager(tempDir);
 
         ScriptHandle handle = manager.load("npc", "entry");
 
         assertNotNull(handle);
-        assertEquals("legacy", handle.invoke("start", ScriptInvocationContext.empty()));
+        assertEquals("legacy:" + entry.toAbsolutePath().normalize(), handle.invoke("start", ScriptInvocationContext.empty()));
     }
 
     @Test
@@ -39,6 +40,31 @@ class AbstractScriptManagerTest {
     }
 
     @Test
+    void loadsExplicitCjsScriptThroughHandle(@TempDir Path tempDir) throws Exception {
+        write(tempDir.resolve("npc").resolve("entry.cjs"), "exports.start = function(ctx) { return 'cjs'; };");
+        TestScriptManager manager = new TestScriptManager(tempDir);
+
+        ScriptHandle handle = manager.load("npc", "entry.cjs");
+
+        assertNotNull(handle);
+        assertEquals("cjs", handle.invoke("start", ScriptInvocationContext.empty()));
+        handle.close();
+    }
+
+    @Test
+    void packageJsonTypeModuleMakesExtensionlessJsLoadAsEsm(@TempDir Path tempDir) throws Exception {
+        write(tempDir.resolve("package.json"), "{\"type\":\"module\"}");
+        write(tempDir.resolve("npc").resolve("entry.js"), "export function start(ctx) { return 'typed-esm'; }");
+        TestScriptManager manager = new TestScriptManager(tempDir);
+
+        ScriptHandle handle = manager.load("npc", "entry");
+
+        assertNotNull(handle);
+        assertEquals("typed-esm", handle.invoke("start", ScriptInvocationContext.empty()));
+        handle.close();
+    }
+
+    @Test
     void clientCacheReusesOneHandleAndClosesItOnReset(@TempDir Path tempDir) throws Exception {
         write(tempDir.resolve("npc").resolve("entry.mjs"), "export function start(ctx) { return 'esm'; }");
         TestScriptManager manager = new TestScriptManager(tempDir);
@@ -49,7 +75,7 @@ class AbstractScriptManagerTest {
 
         assertSame(first, second);
         manager.reset("npc", "entry.mjs", client);
-        assertTrue(((EsmScriptHandle) first).isClosedForTesting());
+        assertTrue(((ModuleScriptHandle) first).isClosedForTesting());
     }
 
     @Test
@@ -64,7 +90,7 @@ class AbstractScriptManagerTest {
 
         assertSame(fallback, manager.load("quest", "medalQuest.mjs", client));
         manager.reset("quest", "medalQuest.mjs", client);
-        assertTrue(((EsmScriptHandle) fallback).isClosedForTesting());
+        assertTrue(((ModuleScriptHandle) fallback).isClosedForTesting());
     }
 
     private static void write(Path path, String source) throws IOException {

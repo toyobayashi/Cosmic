@@ -2,5 +2,6 @@ package scripting;
 
 public enum ScriptMode {
     LEGACY,
-    ESM
+    ESM,
+    COMMONJS
 }

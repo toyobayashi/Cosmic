@@ -96,7 +96,7 @@ public abstract class AbstractScriptManager {
 
         return switch (mode) {
             case LEGACY -> loadLegacyScript(scriptFile);
-            case ESM -> loadEsmScript(scriptFile);
+            case ESM, COMMONJS -> loadModuleScript(scriptFile);
         };
     }
 
@@ -109,6 +109,7 @@ public abstract class AbstractScriptManager {
         enableScriptHostAccess(graalScriptEngine);
 
         try (BufferedReader br = Files.newBufferedReader(scriptFile, StandardCharsets.UTF_8)) {
+            ScriptRuntimeSupport.installGlobals(engine, scriptFile);
             engine.eval(br);
         } catch (final ScriptException | IOException t) {
             log.warn("Exception during script eval for file: {}", scriptFile, t);
@@ -118,11 +119,11 @@ public abstract class AbstractScriptManager {
         return new LegacyScriptHandle(engine, (Invocable) graalScriptEngine);
     }
 
-    private EsmScriptHandle loadEsmScript(Path scriptFile) {
+    private ModuleScriptHandle loadModuleScript(Path scriptFile) {
         try {
-            return EsmScriptHandle.load(scriptFile);
+            return ModuleScriptHandle.load(scriptFile);
         } catch (ScriptLoadException e) {
-            log.warn("Exception during ESM script eval for file: {}", scriptFile, e);
+            log.warn("Exception during module script eval for file: {}", scriptFile, e);
             return null;
         }
     }

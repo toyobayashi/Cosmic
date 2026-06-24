@@ -1,10 +1,26 @@
 package scripting;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class ScriptClassifier {
+    private static final Pattern PACKAGE_TYPE_PATTERN = Pattern.compile("\"type\"\\s*:\\s*\"([^\"]+)\"");
+
     private ScriptClassifier() {
+    }
+
+    public static ScriptMode classify(Path entryPath) {
+        Objects.requireNonNull(entryPath);
+        try {
+            return classify(entryPath, Files.readString(entryPath, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new ScriptLoadException("Failed to read script " + entryPath + ": " + e.getMessage(), e);
+        }
     }
 
     public static ScriptMode classify(Path entryPath, String source) {
@@ -15,11 +31,39 @@ public final class ScriptClassifier {
         if (filename.endsWith(".mjs")) {
             return ScriptMode.ESM;
         }
+        if (filename.endsWith(".cjs")) {
+            return ScriptMode.COMMONJS;
+        }
         if (!filename.endsWith(".js")) {
             throw new IllegalArgumentException("Unsupported script extension: " + entryPath);
         }
 
+        String packageType = nearestPackageType(entryPath);
+        if ("module".equals(packageType)) {
+            return ScriptMode.ESM;
+        }
+        if ("commonjs".equals(packageType)) {
+            return ScriptMode.COMMONJS;
+        }
+
         return containsTopLevelModuleDeclaration(source) ? ScriptMode.ESM : ScriptMode.LEGACY;
+    }
+
+    static String nearestPackageType(Path entryPath) {
+        Path directory = Files.isDirectory(entryPath) ? entryPath : entryPath.getParent();
+        while (directory != null) {
+            Path packageJson = directory.resolve("package.json");
+            if (Files.isRegularFile(packageJson)) {
+                try {
+                    Matcher matcher = PACKAGE_TYPE_PATTERN.matcher(Files.readString(packageJson, StandardCharsets.UTF_8));
+                    return matcher.find() ? matcher.group(1) : "";
+                } catch (IOException e) {
+                    throw new ScriptLoadException("Failed to read package.json " + packageJson + ": " + e.getMessage(), e);
+                }
+            }
+            directory = directory.getParent();
+        }
+        return null;
     }
 
     private static boolean containsTopLevelModuleDeclaration(String source) {

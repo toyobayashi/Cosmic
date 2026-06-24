@@ -19,6 +19,6 @@ public class ScriptPathResolver {
     }
 
     private static boolean hasExplicitScriptExtension(String identifier) {
-        return identifier.endsWith(".js") || identifier.endsWith(".mjs");
+        return identifier.endsWith(".js") || identifier.endsWith(".mjs") || identifier.endsWith(".cjs");
     }
 }

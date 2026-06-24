@@ -35,6 +35,15 @@ class ScriptPathResolverTest {
     }
 
     @Test
+    void explicitCjsIsNotAppended() {
+        ScriptPathResolver resolver = new ScriptPathResolver(Path.of("scripts"));
+
+        Path resolvedPath = resolver.resolveEntry("npc", "9000000.cjs");
+
+        assertEquals(Path.of("scripts", "npc", "9000000.cjs"), resolvedPath);
+    }
+
+    @Test
     void nestedExplicitMjsIdentifierRemainsExplicit() {
         ScriptPathResolver resolver = new ScriptPathResolver(Path.of("scripts"));
 

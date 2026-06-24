@@ -4,7 +4,7 @@
 
 **Goal:** Support native ESM game scripts with named-export callbacks and per-invocation `ctx`, while every existing legacy Script-mode script continues to run unchanged.
 
-**Architecture:** Replace manager-facing `ScriptEngine`/`Invocable` usage with a `ScriptHandle` abstraction. `LegacyScriptHandle` retains the current JSR-223 behavior; `EsmScriptHandle` uses a Graal Polyglot `Context`, evaluates a module `Source`, and executes named exports. The abstract manager selects the handle from the entry extension and lexical module syntax, preserving the present cache scope of each manager.
+**Architecture:** Replace manager-facing `ScriptEngine`/`Invocable` usage with a `ScriptHandle` abstraction. `LegacyScriptHandle` retains the current JSR-223 behavior; `ModuleScriptHandle` uses a Graal Polyglot `Context`, evaluates a module `Source`, and executes named exports. The abstract manager selects the handle from the entry extension and lexical module syntax, preserving the present cache scope of each manager.
 
 **Tech Stack:** Java 21, Maven, JUnit 5, GraalJS JSR-223 (legacy), Graal Polyglot API (ESM).
 
@@ -21,7 +21,7 @@
 | `src/main/java/scripting/ScriptHandle.java` | Manager-facing invocation/lifecycle contract. |
 | `src/main/java/scripting/ScriptInvocationContext.java` | Builds the ESM-only per-invocation `ctx` object. |
 | `src/main/java/scripting/LegacyScriptHandle.java` | Adapt current ScriptEngine globals/functions to `ScriptHandle`. |
-| `src/main/java/scripting/EsmScriptHandle.java` | Evaluate an ESM entry and invoke module exports. |
+| `src/main/java/scripting/ModuleScriptHandle.java` | Evaluate an ESM entry and invoke module exports. |
 | `src/main/java/scripting/SynchronizedScriptHandle.java` | Serialize shared Event-context calls. |
 | `src/main/java/scripting/AbstractScriptManager.java` | Select/load/cache handles instead of exposing ScriptEngine. |
 | `src/main/java/client/Client.java` | Own and close client-scoped handles. |
@@ -227,9 +227,9 @@ git commit -m "refactor: add script handle abstraction"
 ### Task 3: Implement native ESM handles and module behavior
 
 **Files:**
-- Create: `src/main/java/scripting/EsmScriptHandle.java`
+- Create: `src/main/java/scripting/ModuleScriptHandle.java`
 - Create: `src/main/java/scripting/ScriptLoadException.java`
-- Create: `src/test/java/scripting/EsmScriptHandleTest.java`
+- Create: `src/test/java/scripting/ModuleScriptHandleTest.java`
 
 - [ ] **Step 1: Write ESM execution and host-context tests using temporary files**
 
@@ -238,7 +238,7 @@ git commit -m "refactor: add script handle abstraction"
 void invokesNamedExportWithCtxBeforeBusinessArguments(@TempDir Path tempDir) throws Exception {
     Path entry = write(tempDir.resolve("npc.mjs"),
         "export function action(ctx, mode) { return ctx.cm.get('prefix') + mode; }");
-    try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
+    try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
         assertEquals("npc:3", handle.invoke("action", ScriptInvocationContext.of("cm", Map.of("prefix", "npc:")), 3));
     }
 }
@@ -248,7 +248,7 @@ void importedJsWithoutExportsRunsForSideEffects(@TempDir Path tempDir) throws Ex
     write(tempDir.resolve("setup.js"), "globalThis.counter = (globalThis.counter ?? 0) + 1;");
     Path entry = write(tempDir.resolve("entry.mjs"),
         "import './setup.js'; export function count() { return globalThis.counter; }");
-    try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
+    try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
         assertEquals(1, handle.invoke("count", ScriptInvocationContext.empty()));
     }
 }
@@ -267,7 +267,7 @@ void permitsRelativeAndAbsoluteStaticImports(@TempDir Path tempDir) throws Excep
         export function result() { return relative + absolute; }
         """.formatted(absolute.toRealPath()));
 
-    try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
+    try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
         assertEquals("relative:absolute", handle.invoke("result", ScriptInvocationContext.empty()));
     }
 }
@@ -282,7 +282,7 @@ void evaluatesOneModuleOnlyOncePerHandle(@TempDir Path tempDir) throws Exception
         export function result() { return `${first}:${second}`; }
         """);
 
-    try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
+    try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
         assertEquals("1:1", handle.invoke("result", ScriptInvocationContext.empty()));
     }
 }
@@ -292,7 +292,7 @@ void supportsCyclicStaticImports(@TempDir Path tempDir) throws Exception {
     write(tempDir.resolve("a.mjs"), "import { b } from './b.mjs'; export const a = 'a'; export function value() { return a + b; }");
     write(tempDir.resolve("b.mjs"), "import { a } from './a.mjs'; export const b = 'b'; export function peer() { return a + b; }");
 
-    try (ScriptHandle handle = EsmScriptHandle.load(tempDir.resolve("a.mjs"))) {
+    try (ScriptHandle handle = ModuleScriptHandle.load(tempDir.resolve("a.mjs"))) {
         assertEquals("ab", handle.invoke("value", ScriptInvocationContext.empty()));
     }
 }
@@ -306,18 +306,18 @@ void supportsCyclicStaticImports(@TempDir Path tempDir) throws Exception {
 })
 void rejectsUnsupportedModuleFeatures(String source, @TempDir Path tempDir) {
     Path entry = write(tempDir.resolve("entry.mjs"), source);
-    ScriptLoadException exception = assertThrows(ScriptLoadException.class, () -> EsmScriptHandle.load(entry));
+    ScriptLoadException exception = assertThrows(ScriptLoadException.class, () -> ModuleScriptHandle.load(entry));
     assertTrue(exception.getMessage().contains(entry.toString()));
 }
 ```
 
 - [ ] **Step 3: Run the new ESM test class and confirm it fails**
 
-Run: `./mvnw -Dtest=EsmScriptHandleTest test`
+Run: `./mvnw -Dtest=ModuleScriptHandleTest test`
 
-Expected: compilation failure naming `EsmScriptHandle` and `ScriptLoadException`.
+Expected: compilation failure naming `ModuleScriptHandle` and `ScriptLoadException`.
 
-- [ ] **Step 4: Implement `EsmScriptHandle` with Polyglot Context**
+- [ ] **Step 4: Implement `ModuleScriptHandle` with Polyglot Context**
 
 Create each handle from exactly one entry path:
 
@@ -348,14 +348,14 @@ Convert `PolyglotException` to `ScriptLoadException`/`ScriptException` while ret
 
 - [ ] **Step 5: Run focused ESM tests**
 
-Run: `./mvnw -Dtest=EsmScriptHandleTest test`
+Run: `./mvnw -Dtest=ModuleScriptHandleTest test`
 
 Expected: PASS.
 
 - [ ] **Step 6: Commit ESM loading support**
 
 ```bash
-git add src/main/java/scripting/EsmScriptHandle.java src/main/java/scripting/ScriptLoadException.java src/test/java/scripting/EsmScriptHandleTest.java
+git add src/main/java/scripting/ModuleScriptHandle.java src/main/java/scripting/ScriptLoadException.java src/test/java/scripting/ModuleScriptHandleTest.java
 git commit -m "feat: load ESM game scripts"
 ```
 
@@ -378,7 +378,7 @@ void clientCacheReusesOneHandleAndClosesItOnReset(@TempDir Path tempDir) throws 
 
     assertSame(handle, manager.loadForClient("npc", "entry.mjs", client));
     manager.reset("npc", "entry.mjs", client);
-    assertTrue(((EsmScriptHandle) handle).isClosedForTesting());
+    assertTrue(((ModuleScriptHandle) handle).isClosedForTesting());
 }
 ```
 
@@ -390,7 +390,7 @@ Expected: compilation failure because the common loader and client handle cache 
 
 - [ ] **Step 3: Replace ScriptEngine-specific abstract methods**
 
-In `AbstractScriptManager`, replace both `getInvocableScriptEngine` overloads with `loadScript(directory, identifier)` and `loadScript(directory, identifier, Client)`. Each method must use `ScriptPathResolver`, read source once for classification, create a `LegacyScriptHandle` or `EsmScriptHandle`, and log/return `null` on load failure just as the current manager does.
+In `AbstractScriptManager`, replace both `getInvocableScriptEngine` overloads with `loadScript(directory, identifier)` and `loadScript(directory, identifier, Client)`. Each method must use `ScriptPathResolver`, read source once for classification, create a `LegacyScriptHandle` or `ModuleScriptHandle`, and log/return `null` on load failure just as the current manager does.
 
 The client overload uses one stable normalized path key. `resetContext` removes that exact handle and closes it.
 
@@ -585,11 +585,11 @@ git commit -m "feat: support ESM shared game scripts"
 
 ```java
 @Test
-void esmScriptWithContextAndStaticImportEvaluates(@TempDir Path tempDir) throws Exception {
+void moduleScriptWithContextAndStaticImportEvaluates(@TempDir Path tempDir) throws Exception {
     write(tempDir.resolve("helpers.js"), "export const message = 'ok';");
     Path entry = write(tempDir.resolve("entry.mjs"),
         "import { message } from './helpers.js'; export function start(ctx) { return message; }");
-    try (ScriptHandle handle = EsmScriptHandle.load(entry)) {
+    try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
         assertEquals("ok", handle.invoke("start", ScriptInvocationContext.empty()));
     }
 }
@@ -646,4 +646,4 @@ git commit -m "docs: explain ESM game scripts"
 
 - Spec coverage: Tasks 1-3 cover classification, ESM loading/import restrictions, callback exports, `ctx`, and Graal alignment. Tasks 4-6 preserve all specified cache scopes and dispose paths across every manager. Task 7 covers author documentation and complete verification.
 - Placeholder scan: the document contains no unresolved work markers, deferred steps, or unspecified error-handling step.
-- Type consistency: every manager calls `ScriptHandle.invoke(callback, ScriptInvocationContext, args...)`; `LegacyScriptHandle` strips the context while `EsmScriptHandle` passes it as the first callback argument.
+- Type consistency: every manager calls `ScriptHandle.invoke(callback, ScriptInvocationContext, args...)`; `LegacyScriptHandle` strips the context while `ModuleScriptHandle` passes it as the first callback argument.
