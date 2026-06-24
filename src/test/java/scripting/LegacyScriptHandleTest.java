@@ -49,6 +49,15 @@ class LegacyScriptHandleTest {
         assertFalse(handle.hasCallback("missing"));
     }
 
+    @Test
+    void synchronizedWrapperKeepsLegacyNullDelegateBehavior() {
+        ScriptHandle handle = SynchronizedScriptHandle.of(null);
+
+        assertThrows(NullPointerException.class, () -> handle.invoke("init", ScriptInvocationContext.empty()));
+        assertThrows(NullPointerException.class, () -> handle.hasCallback("init"));
+        handle.close();
+    }
+
     private static ScriptEngine newHostEnabledEngine() {
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("graal.js");
         Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);

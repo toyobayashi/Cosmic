@@ -1,13 +1,12 @@
 package scripting;
 
 import javax.script.ScriptException;
-import java.util.Objects;
 
 public final class SynchronizedScriptHandle implements ScriptHandle {
     private final ScriptHandle delegate;
 
     private SynchronizedScriptHandle(ScriptHandle delegate) {
-        this.delegate = Objects.requireNonNull(delegate);
+        this.delegate = delegate;
     }
 
     public static ScriptHandle of(ScriptHandle delegate) {
@@ -27,6 +26,8 @@ public final class SynchronizedScriptHandle implements ScriptHandle {
 
     @Override
     public synchronized void close() {
-        delegate.close();
+        if (delegate != null) {
+            delegate.close();
+        }
     }
 }

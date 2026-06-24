@@ -41,7 +41,6 @@ var travelType;
 var travelStatus;
 
 export function start(ctx) {
-    console.log(111)
     travelStatus = getTravelingStatus(ctx.cm.getPlayer().getMapId());
     action(ctx, 1, 0, 0);
 }

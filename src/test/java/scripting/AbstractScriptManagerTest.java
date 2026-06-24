@@ -52,6 +52,21 @@ class AbstractScriptManagerTest {
         assertTrue(((EsmScriptHandle) first).isClosedForTesting());
     }
 
+    @Test
+    void fallbackScriptRemainsCachedWhenDifferentIdentifierIsReset(@TempDir Path tempDir) throws Exception {
+        write(tempDir.resolve("quest").resolve("medalQuest.mjs"), "export function start(ctx) { return 'fallback'; }");
+        TestScriptManager manager = new TestScriptManager(tempDir);
+        Client client = Client.createMock();
+
+        ScriptHandle fallback = manager.load("quest", "medalQuest.mjs", client);
+
+        manager.reset("quest", "29900", client);
+
+        assertSame(fallback, manager.load("quest", "medalQuest.mjs", client));
+        manager.reset("quest", "medalQuest.mjs", client);
+        assertTrue(((EsmScriptHandle) fallback).isClosedForTesting());
+    }
+
     private static void write(Path path, String source) throws IOException {
         Files.createDirectories(path.getParent());
         Files.writeString(path, source, StandardCharsets.UTF_8);
