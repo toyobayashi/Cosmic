@@ -23,6 +23,7 @@ package net.opcodes;
 
 public enum RecvOpcode {
     CUSTOM_PACKET(0x3713),//13 37 lol
+    CLIENT_HELLO(0x544B),
 
     LOGIN_PASSWORD(0x01),
     GUEST_LOGIN(0x02),

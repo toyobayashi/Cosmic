@@ -170,6 +170,7 @@ import net.server.channel.handlers.WeddingTalkMoreHandler;
 import net.server.channel.handlers.WhisperHandler;
 import net.server.handlers.CustomPacketHandler;
 import net.server.handlers.KeepAliveHandler;
+import net.server.handlers.ClientHelloHandler;
 import net.server.handlers.LoginRequiringNoOpHandler;
 import net.server.handlers.login.AcceptToSHandler;
 import net.server.handlers.login.AfterLoginHandler;
@@ -273,6 +274,7 @@ public final class PacketProcessor {
     private void registerCommonHandlers() {
         registerHandler(RecvOpcode.PONG, new KeepAliveHandler());
         registerHandler(RecvOpcode.CUSTOM_PACKET, new CustomPacketHandler());
+        registerHandler(RecvOpcode.CLIENT_HELLO, new ClientHelloHandler());
     }
 
     private void registerLoginHandlers() {

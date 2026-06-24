@@ -155,6 +155,8 @@ public class Client extends ChannelInboundHandlerAdapter {
     private int lang = 0;
     private int packetCodePage = PacketCharsets.DEFAULT_CODEPAGE;
     private Charset packetCharset = PacketCharsets.DEFAULT_CHARSET;
+    private boolean extendedClient = false;
+    private int clientCapabilities = 0;
 
     public enum Type {
         LOGIN,
@@ -198,6 +200,26 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
         this.packetCodePage = packetCodePage;
         this.packetCharset = PacketCharsets.forWindowsCodePage(packetCodePage);
+    }
+
+    public boolean isExtendedClient() {
+        return extendedClient;
+    }
+
+    public void setExtendedClient(boolean extendedClient) {
+        this.extendedClient = extendedClient;
+    }
+
+    public int getClientCapabilities() {
+        return clientCapabilities;
+    }
+
+    public void setClientCapabilities(int clientCapabilities) {
+        this.clientCapabilities = clientCapabilities;
+    }
+
+    public boolean hasClientCapability(int capability) {
+        return (clientCapabilities & capability) != 0;
     }
 
     @Override

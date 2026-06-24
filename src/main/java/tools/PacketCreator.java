@@ -131,6 +131,8 @@ import java.util.stream.Collectors;
  * @author Frz
  */
 public class PacketCreator {
+    public static final int CLIENT_EXP_TABLE_MAGIC = 0x45585054;
+
 
     public static final List<Pair<Stat, Integer>> EMPTY_STATUPDATE = Collections.emptyList();
     private final static long FT_UT_OFFSET = 116444736010800000L + (10000L * TimeZone.getDefault().getOffset(System.currentTimeMillis())); // normalize with timezone offset suggested by Ari
@@ -989,6 +991,17 @@ public class PacketCreator {
         }
         addCharacterInfo(p, chr);
         p.writeLong(getTime(System.currentTimeMillis()));
+        return p;
+    }
+
+    public static Packet clientExpTable() {
+        final OutPacket p = OutPacket.create(SendOpcode.CLIENT_EXT);
+        p.writeInt(CLIENT_EXP_TABLE_MAGIC);
+        p.writeByte(1);
+        p.writeShort(201);
+        for (int level = 0; level <= 200; level++) {
+            p.writeInt(ExpTable.getExpNeededForLevel(level));
+        }
         return p;
     }
 
