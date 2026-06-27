@@ -75,7 +75,7 @@ Object.defineProperties(processObject, {
     enumerable: true,
   },
   cwd: {
-    get() {
+    value() {
       return Process.cwd();
     },
     enumerable: true,

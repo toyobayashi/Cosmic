@@ -1,9 +1,12 @@
 package scripting;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
 public class ScriptPathResolver {
+    private static final String[] SCRIPT_EXTENSIONS = {".mjs", ".cjs", ".js"};
+
     private final Path scriptsRoot;
 
     public ScriptPathResolver(Path scriptsRoot) {
@@ -14,8 +17,19 @@ public class ScriptPathResolver {
         Objects.requireNonNull(directory);
         Objects.requireNonNull(identifier);
 
-        String filename = hasExplicitScriptExtension(identifier) ? identifier : identifier + ".js";
-        return scriptsRoot.resolve(directory).resolve(filename).normalize();
+        Path scriptDirectory = scriptsRoot.resolve(directory);
+        if (hasExplicitScriptExtension(identifier)) {
+            return scriptDirectory.resolve(identifier).normalize();
+        }
+
+        for (String extension : SCRIPT_EXTENSIONS) {
+            Path candidate = scriptDirectory.resolve(identifier + extension).normalize();
+            if (Files.isRegularFile(candidate)) {
+                return candidate;
+            }
+        }
+
+        return scriptDirectory.resolve(identifier + ".js").normalize();
     }
 
     private static boolean hasExplicitScriptExtension(String identifier) {

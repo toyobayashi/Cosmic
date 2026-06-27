@@ -209,7 +209,8 @@ class ModuleScriptHandleTest {
                         + process.versions.node + ':'
                         + process.arch + ':'
                         + process.platform + ':'
-                        + process.cwd + ':'
+                        + typeof process.cwd + ':'
+                        + process.cwd() + ':'
                         + Array.isArray(process.argv) + ':'
                         + process.argv[1] + ':'
                         + typeof process.env.PATH;
@@ -218,7 +219,7 @@ class ModuleScriptHandleTest {
 
         try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
             String result = (String) handle.invoke("result", ScriptInvocationContext.empty());
-            assertTrue(result.matches("string:.+:(arm|arm64|ia32|loong64|mips|mipsel|ppc64|riscv64|s390x|x64):(aix|android|darwin|freebsd|linux|openbsd|sunos|win32):.+:true:.+:string"));
+            assertTrue(result.matches("string:.+:(arm|arm64|ia32|loong64|mips|mipsel|ppc64|riscv64|s390x|x64):(aix|android|darwin|freebsd|linux|openbsd|sunos|win32):function:.+:true:.+:string"));
             assertTrue(result.contains(":" + entry.toRealPath() + ":"));
         }
     }
@@ -231,7 +232,8 @@ class ModuleScriptHandleTest {
                         + process.versions.node + ':'
                         + process.arch + ':'
                         + process.platform + ':'
-                        + process.cwd + ':'
+                        + typeof process.cwd + ':'
+                        + process.cwd() + ':'
                         + Array.isArray(process.argv) + ':'
                         + process.argv[1] + ':'
                         + typeof process.env.PATH;
@@ -240,7 +242,7 @@ class ModuleScriptHandleTest {
 
         try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
             String result = (String) handle.invoke("result", ScriptInvocationContext.empty());
-            assertTrue(result.matches("string:.+:(arm|arm64|ia32|loong64|mips|mipsel|ppc64|riscv64|s390x|x64):(aix|android|darwin|freebsd|linux|openbsd|sunos|win32):.+:true:.+:string"));
+            assertTrue(result.matches("string:.+:(arm|arm64|ia32|loong64|mips|mipsel|ppc64|riscv64|s390x|x64):(aix|android|darwin|freebsd|linux|openbsd|sunos|win32):function:.+:true:.+:string"));
             assertTrue(result.contains(":" + entry.toRealPath() + ":"));
         }
     }
