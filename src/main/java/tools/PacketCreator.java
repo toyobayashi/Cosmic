@@ -55,7 +55,6 @@ import constants.id.ItemId;
 import constants.id.MapId;
 import constants.id.NpcId;
 import constants.inventory.ItemConstants;
-import constants.string.CharsetConstants;
 import constants.skills.Buccaneer;
 import constants.skills.ChiefBandit;
 import constants.skills.Corsair;
@@ -6790,14 +6789,6 @@ public class PacketCreator {
         p.writeByte(2);
         p.writeInt(itemid);
         return p;
-    }
-
-    private static String getRightPaddedStr(String in, char padchar, int length) {
-        StringBuilder builder = new StringBuilder(in);
-        while (builder.toString().getBytes(CharsetConstants.CHARSET).length < length) {
-            builder.append(padchar);
-        }
-        return builder.toString();
     }
 
     public static Packet MobDamageMobFriendly(Monster mob, int damage, int remainingHp) {

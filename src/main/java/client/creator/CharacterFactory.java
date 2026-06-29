@@ -43,7 +43,7 @@ public abstract class CharacterFactory {
             return -3;
         }
 
-        if (!Character.canCreateChar(name)) {
+        if (!Character.canCreateChar(name, c.getPacketCharset())) {
             return -1;
         }
 

@@ -1,6 +1,5 @@
 package client;
 
-import constants.string.CharsetConstants;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
@@ -12,34 +11,38 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CharacterNameValidationTest {
 
     @Test
-    void validatesChineseCharacterNamesAccordingToConfiguredCharset() {
-        assertEquals(canBeValidCharacterName("测试"), Character.isValidNewCharacterName("测试"));
-        assertEquals(canBeValidCharacterName("小明123"), Character.isValidNewCharacterName("小明123"));
+    void validatesChineseCharacterNamesAccordingToClientCharset() {
+        Charset charset = Charset.forName("windows-936");
+
+        assertEquals(canBeValidCharacterName("测试", charset), Character.isValidNewCharacterName("测试", charset));
+        assertEquals(canBeValidCharacterName("小明123", charset), Character.isValidNewCharacterName("小明123", charset));
     }
 
     @Test
     void preservesExistingAsciiCharacterNameRules() {
-        assertTrue(Character.isValidNewCharacterName("Test123"));
-        assertFalse(Character.isValidNewCharacterName("ab"));
-        assertFalse(Character.isValidNewCharacterName("name_with_symbol"));
+        Charset charset = Charset.forName("windows-1252");
+
+        assertTrue(Character.isValidNewCharacterName("Test123", charset));
+        assertFalse(Character.isValidNewCharacterName("ab", charset));
+        assertFalse(Character.isValidNewCharacterName("name_with_symbol", charset));
     }
 
     @Test
     void rejectsNamesThatExceedClientFixedNameBytes() {
-        assertFalse(Character.isValidNewCharacterName(overlongNameFor(CharsetConstants.CHARSET)));
+        Charset charset = Charset.forName("windows-936");
+
+        assertFalse(Character.isValidNewCharacterName(overlongNameFor(charset), charset));
     }
 
     @Test
-    void rejectsNamesThatConfiguredCharsetCannotEncode() {
-        if (!CharsetConstants.CHARSET.newEncoder().canEncode("小明123")) {
-            assertFalse(Character.isValidNewCharacterName("小明123"));
-        }
+    void rejectsNamesThatClientCharsetCannotEncode() {
+        assertFalse(Character.isValidNewCharacterName("小明123", Charset.forName("windows-1252")));
     }
 
-    private static boolean canBeValidCharacterName(String name) {
-        return CharsetConstants.CHARSET.newEncoder().canEncode(name)
-                && name.getBytes(CharsetConstants.CHARSET).length >= 3
-                && name.getBytes(CharsetConstants.CHARSET).length <= 12;
+    private static boolean canBeValidCharacterName(String name, Charset charset) {
+        return charset.newEncoder().canEncode(name)
+                && name.getBytes(charset).length >= 3
+                && name.getBytes(charset).length <= 12;
     }
 
     private static String overlongNameFor(Charset charset) {

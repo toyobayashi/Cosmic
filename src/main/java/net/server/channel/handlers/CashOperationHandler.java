@@ -413,7 +413,7 @@ public final class CashOperationHandler extends AbstractPacketHandler {
                     if (cItem.getSN() == 50600000 && YamlConfig.config.server.ALLOW_CASHSHOP_NAME_CHANGE) {
                         p.readString(); //old name
                         String newName = p.readString();
-                        if (!Character.canCreateChar(newName) || chr.getLevel() < 10) { //(longest ban duration isn't tracked currently)
+                        if (!Character.canCreateChar(newName, c.getPacketCharset()) || chr.getLevel() < 10) { //(longest ban duration isn't tracked currently)
                             c.sendPacket(PacketCreator.showCashShopMessage((byte) 0));
                             c.enableCSActions();
                             return;

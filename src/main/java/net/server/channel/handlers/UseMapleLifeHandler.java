@@ -43,7 +43,7 @@ public class UseMapleLifeHandler extends AbstractPacketHandler {
         player.setLastUsedCashItem(timeNow);
 
         String name = p.readString();
-        if (Character.canCreateChar(name)) {
+        if (Character.canCreateChar(name, c.getPacketCharset())) {
             c.sendPacket(PacketCreator.sendMapleLifeCharacterInfo());
         } else {
             c.sendPacket(PacketCreator.sendMapleLifeNameError());

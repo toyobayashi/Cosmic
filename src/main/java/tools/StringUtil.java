@@ -21,8 +21,6 @@
 */
 package tools;
 
-import constants.string.CharsetConstants;
-
 public class StringUtil {
     /**
      * Gets a string padded from the left to <code>length</code> by
@@ -39,23 +37,6 @@ public class StringUtil {
             builder.append(padchar);
         }
         builder.append(in);
-        return builder.toString();
-    }
-
-    /**
-     * Gets a string padded from the right to <code>length</code> by
-     * <code>padchar</code>.
-     *
-     * @param in      The input string to be padded.
-     * @param padchar The character to pad with.
-     * @param length  The length to pad to.
-     * @return The padded string.
-     */
-    public static String getRightPaddedStr(String in, char padchar, int length) {
-        StringBuilder builder = new StringBuilder(in);
-        while (builder.toString().getBytes(CharsetConstants.CHARSET).length < length) {
-            builder.append(padchar);
-        }
         return builder.toString();
     }
 

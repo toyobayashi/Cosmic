@@ -48,7 +48,6 @@ import constants.id.ItemId;
 import constants.id.MapId;
 import constants.id.MobId;
 import constants.inventory.ItemConstants;
-import constants.string.CharsetConstants;
 import constants.skills.Aran;
 import constants.skills.Beginner;
 import constants.skills.Bishop;
@@ -158,6 +157,7 @@ import tools.packets.WeddingPackets;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -977,26 +977,30 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    public static boolean canCreateChar(String name) {
+    public static boolean canCreateChar(String name, Charset charset) {
+        if (name == null || charset == null) {
+            return false;
+        }
+
         String lname = name.toLowerCase();
         for (String nameTest : BLOCKED_NAMES) {
             if (lname.contains(nameTest)) {
                 return false;
             }
         }
-        return getIdByName(name) < 0 && isValidNewCharacterName(name);
+        return getIdByName(name) < 0 && isValidNewCharacterName(name, charset);
     }
 
-    public static boolean isValidNewCharacterName(String name) {
-        if (name == null) {
+    public static boolean isValidNewCharacterName(String name, Charset charset) {
+        if (name == null || charset == null) {
             return false;
         }
 
-        if (!CharsetConstants.CHARSET.newEncoder().canEncode(name)) {
+        if (!charset.newEncoder().canEncode(name)) {
             return false;
         }
 
-        int encodedLength = name.getBytes(CharsetConstants.CHARSET).length;
+        int encodedLength = name.getBytes(charset).length;
         return encodedLength >= 3
                 && encodedLength <= 12
                 && Pattern.compile("[\\p{IsHan}a-zA-Z0-9]+").matcher(name).matches();

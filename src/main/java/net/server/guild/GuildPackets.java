@@ -5,11 +5,13 @@ import client.Client;
 import net.opcodes.SendOpcode;
 import net.packet.OutPacket;
 import net.packet.Packet;
+import net.packet.PacketCharsets;
+import net.packet.PerClientPacket;
 import net.server.Server;
 import tools.PacketCreator;
 import tools.Pair;
-import tools.StringUtil;
 
+import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -17,12 +19,14 @@ import java.util.List;
 
 public class GuildPackets {
     public static Packet showGuildInfo(Character chr) {
-        OutPacket p = OutPacket.create(SendOpcode.GUILD_OPERATION);
-        p.writeByte(0x1A); //signature for showing guild info
         if (chr == null) { //show empty guild (used for leaving, expelled)
+            OutPacket p = OutPacket.create(SendOpcode.GUILD_OPERATION);
+            p.writeByte(0x1A); //signature for showing guild info
             p.writeByte(0);
             return p;
         }
+        OutPacket p = OutPacket.create(SendOpcode.GUILD_OPERATION, chr.getClient().getPacketCharset());
+        p.writeByte(0x1A); //signature for showing guild info
         Guild g = chr.getClient().getWorldServer().getGuild(chr.getMGC());
         if (g == null) { //failed to read from DB - don't show a guild
             p.writeByte(0);
@@ -40,7 +44,7 @@ public class GuildPackets {
             p.writeInt(mgc.getId());
         }
         for (GuildCharacter mgc : members) {
-            p.writeFixedString(StringUtil.getRightPaddedStr(mgc.getName(), '\0', 13));
+            p.writeFixedString(mgc.getName(), 13);
             p.writeInt(mgc.getJobId());
             p.writeInt(mgc.getLevel());
             p.writeInt(mgc.getGuildRank());
@@ -122,11 +126,17 @@ public class GuildPackets {
     }
 
     public static Packet newGuildMember(GuildCharacter mgc) {
-        OutPacket p = OutPacket.create(SendOpcode.GUILD_OPERATION);
+        return new PerClientPacket(
+                c -> newGuildMember(mgc, c.getPacketCharset()),
+                () -> newGuildMember(mgc, PacketCharsets.DEFAULT_CHARSET));
+    }
+
+    private static Packet newGuildMember(GuildCharacter mgc, Charset charset) {
+        OutPacket p = OutPacket.create(SendOpcode.GUILD_OPERATION, charset);
         p.writeByte(0x27);
         p.writeInt(mgc.getGuildId());
         p.writeInt(mgc.getId());
-        p.writeFixedString(StringUtil.getRightPaddedStr(mgc.getName(), '\0', 13));
+        p.writeFixedString(mgc.getName(), 13);
         p.writeInt(mgc.getJobId());
         p.writeInt(mgc.getLevel());
         p.writeInt(mgc.getGuildRank()); //should be always 5 but whatevs
@@ -347,7 +357,7 @@ public class GuildPackets {
             p.writeInt(mgc.getId());
         }
         for (GuildCharacter mgc : members) {
-            p.writeFixedString(StringUtil.getRightPaddedStr(mgc.getName(), '\0', 13));
+            p.writeFixedString(mgc.getName(), 13);
             p.writeInt(mgc.getJobId());
             p.writeInt(mgc.getLevel());
             p.writeInt(mgc.getGuildRank());
