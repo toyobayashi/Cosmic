@@ -166,7 +166,7 @@ function sendSkipBeginnerQuestsPrompt() {
     if (jobId == 0) {
         cm.sendSimple(buildExplorerSkipSelection());
     } else if (jobId == 1000) {
-        selectedQuestSkipTarget = ["Cygnus Knight", 10, 130000000];
+        selectedQuestSkipTarget = ["Cygnus Knight", 10, 130000000, 1];
         cm.sendOk(buildSkipConfirmation());
     } else if (jobId == 2000) {
         selectedQuestSkipTarget = ["Aran", 10, 140000000];
@@ -187,18 +187,28 @@ function buildExplorerSkipSelection() {
 }
 
 function handleSkipBeginnerQuestsSelection(selection) {
-    if (cm.getJobId() != 0) {
+    var jobId = cm.getJobId();
+
+    if (jobId == 1000 || jobId == 2000) {
         skipBeginnerQuests();
         return;
     }
 
-    if (selection < 0 || selection >= explorerSkipTargets.length) {
-        cm.dispose();
+    if (jobId == 0) {
+        if (selection < 0 || selection >= explorerSkipTargets.length) {
+            cm.dispose();
+            return;
+        }
+
+        selectedQuestSkipTarget = explorerSkipTargets[selection];
+        cm.sendOk(buildSkipConfirmation());
         return;
     }
 
-    selectedQuestSkipTarget = explorerSkipTargets[selection];
-    cm.sendOk(buildSkipConfirmation());
+    if (jobId != 0) {
+        cm.dispose();
+        return;
+    }
 }
 
 function buildSkipConfirmation() {
@@ -221,7 +231,11 @@ function skipBeginnerQuests() {
         prepareAranFirstJobQuests();
     }
 
-    cm.warp(selectedQuestSkipTarget[2]);
+    if (selectedQuestSkipTarget.length > 3) {
+        cm.warp(selectedQuestSkipTarget[2], selectedQuestSkipTarget[3]);
+    } else {
+        cm.warp(selectedQuestSkipTarget[2]);
+    }
     cm.dispose();
 }
 
@@ -230,14 +244,9 @@ function prepareCygnusFirstJobQuests() {
         20000, 20001, 20002, 20003, 20004, 20005, 20006, 20007, 20008,
         20010, 20011, 20012, 20013, 20015, 20016, 20017, 20020, 20100
     ];
-    var firstJobQuests = [20101, 20102, 20103, 20104, 20105];
 
     for (var i = 0; i < completedPreludeQuests.length; i++) {
         cm.forceCompleteQuest(completedPreludeQuests[i]);
-    }
-
-    for (var j = 0; j < firstJobQuests.length; j++) {
-        cm.forceStartQuest(firstJobQuests[j]);
     }
 }
 
