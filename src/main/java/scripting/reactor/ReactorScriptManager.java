@@ -25,12 +25,12 @@ import client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractScriptManager;
+import scripting.ScriptHandle;
+import scripting.ScriptInvocationContext;
 import server.maps.Reactor;
 import server.maps.ReactorDropEntry;
 import tools.DatabaseConnection;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -55,12 +55,12 @@ public class ReactorScriptManager extends AbstractScriptManager {
 
     public void onHit(Client c, Reactor reactor) {
         try {
-            Invocable iv = initializeInvocable(c, reactor);
-            if (iv == null) {
+            ScriptHandle handle = initializeHandle(c, reactor);
+            if (handle == null) {
                 return;
             }
 
-            iv.invokeFunction("hit");
+            handle.invoke("hit", ScriptInvocationContext.of("rm", new ReactorActionManager(c, reactor)));
         } catch (final NoSuchMethodException e) {
             //do nothing, hit is OPTIONAL
         } catch (final ScriptException | NullPointerException e) {
@@ -70,12 +70,12 @@ public class ReactorScriptManager extends AbstractScriptManager {
 
     public void act(Client c, Reactor reactor) {
         try {
-            Invocable iv = initializeInvocable(c, reactor);
-            if (iv == null) {
+            ScriptHandle handle = initializeHandle(c, reactor);
+            if (handle == null) {
                 return;
             }
 
-            iv.invokeFunction("act");
+            handle.invoke("act", ScriptInvocationContext.of("rm", new ReactorActionManager(c, reactor)));
         } catch (final ScriptException | NoSuchMethodException | NullPointerException e) {
             log.error("Error during act script for reactor: {}", reactor.getId(), e);
         }
@@ -117,27 +117,18 @@ public class ReactorScriptManager extends AbstractScriptManager {
     private void touching(Client c, Reactor reactor, boolean touching) {
         final String functionName = touching ? "touch" : "untouch";
         try {
-            Invocable iv = initializeInvocable(c, reactor);
-            if (iv == null) {
+            ScriptHandle handle = initializeHandle(c, reactor);
+            if (handle == null) {
                 return;
             }
 
-            iv.invokeFunction(functionName);
+            handle.invoke(functionName, ScriptInvocationContext.of("rm", new ReactorActionManager(c, reactor)));
         } catch (final ScriptException | NoSuchMethodException | NullPointerException e) {
             log.error("Error during {} script for reactor: {}", functionName, reactor.getId(), e);
         }
     }
 
-    private Invocable initializeInvocable(Client c, Reactor reactor) {
-        ScriptEngine engine = getInvocableScriptEngine("reactor/" + reactor.getId() + ".js", c);
-        if (engine == null) {
-            return null;
-        }
-
-        Invocable iv = (Invocable) engine;
-        ReactorActionManager rm = new ReactorActionManager(c, reactor, iv);
-        engine.put("rm", rm);
-
-        return iv;
+    private ScriptHandle initializeHandle(Client c, Reactor reactor) {
+        return loadScript("reactor", String.valueOf(reactor.getId()), c);
     }
 }

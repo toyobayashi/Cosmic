@@ -63,8 +63,7 @@
         <!-- Dependencies -->
         <slf4j-api.version>2.0.17</slf4j-api.version> <!-- Logging facade -->
         <log4j.version>2.25.0</log4j.version> <!-- Slf4j implementation -->
-        <graalvm-js.version>23.0.4</graalvm-js.version>
-        <graalvm-js-scriptengine.version>24.0.1</graalvm-js-scriptengine.version> <!-- ScriptEngine implementation -->
+        <graalvm-js.version>24.0.1</graalvm-js.version> <!-- ScriptEngine implementation -->
         <netty.version>4.2.2.Final</netty.version> <!-- Networking -->
         <yamlbeans.version>1.17</yamlbeans.version> <!-- Config file -->
         <jcip-annotations.version>1.0</jcip-annotations.version> <!-- Annotations for concurrency documentation -->
@@ -262,14 +261,15 @@
 
         <!-- Scripting -->
         <dependency>
-            <groupId>org.graalvm.js</groupId>
+            <groupId>org.graalvm.polyglot</groupId>
             <artifactId>js</artifactId>
             <version>${graalvm-js.version}</version>
+            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js-scriptengine</artifactId>
-            <version>${graalvm-js-scriptengine.version}</version>
+            <version>${graalvm-js.version}</version>
         </dependency>
 
         <!-- Testing -->

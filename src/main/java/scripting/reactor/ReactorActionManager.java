@@ -39,7 +39,6 @@ import server.maps.ReactorDropEntry;
 import server.partyquest.CarnivalFactory;
 import server.partyquest.CarnivalFactory.MCSkill;
 
-import javax.script.Invocable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,12 +50,10 @@ import java.util.List;
  */
 public class ReactorActionManager extends AbstractPlayerInteraction {
     private final Reactor reactor;
-    private final Invocable iv;
 
-    public ReactorActionManager(Client c, Reactor reactor, Invocable iv) {
+    public ReactorActionManager(Client c, Reactor reactor) {
         super(c);
         this.reactor = reactor;
-        this.iv = iv;
     }
 
     public void hitReactor() {

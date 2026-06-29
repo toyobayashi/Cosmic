@@ -38,18 +38,69 @@ import java.nio.file.Path;
  */
 public abstract class AbstractScriptManager {
     private static final Logger log = LoggerFactory.getLogger(AbstractScriptManager.class);
+    private final Path scriptsRoot;
+    private final ScriptPathResolver scriptPathResolver;
     private final ScriptEngineFactory sef;
 
     protected AbstractScriptManager() {
+        this(Path.of("scripts"));
+    }
+
+    protected AbstractScriptManager(Path scriptsRoot) {
+        this.scriptsRoot = scriptsRoot;
+        this.scriptPathResolver = new ScriptPathResolver(scriptsRoot);
         sef = new ScriptEngineManager().getEngineByName("graal.js").getFactory();
     }
 
-    protected ScriptEngine getInvocableScriptEngine(String path) {
-        Path scriptFile = Path.of("scripts", path);
+    protected ScriptHandle loadScript(String directory, String identifier) {
+        return loadScript(scriptPathResolver.resolveEntry(directory, identifier));
+    }
+
+    protected ScriptHandle loadScript(String directory, String identifier, Client c) {
+        Path scriptFile = scriptPathResolver.resolveEntry(directory, identifier);
+        String cacheKey = cacheKey(scriptFile);
+        ScriptHandle handle = c.getScriptHandle(cacheKey);
+        if (handle == null) {
+            handle = loadScript(scriptFile);
+            if (handle != null) {
+                c.setScriptHandle(cacheKey, handle);
+            }
+        }
+        return handle;
+    }
+
+    protected ScriptHandle loadScript(String path) {
+        return loadScript(scriptsRoot.resolve(path).normalize());
+    }
+
+    private ScriptHandle loadScript(Path scriptFile) {
         if (!Files.exists(scriptFile)) {
             return null;
         }
 
+        String source;
+        try {
+            source = Files.readString(scriptFile, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.warn("Exception during script read for file: {}", scriptFile, e);
+            return null;
+        }
+
+        ScriptMode mode;
+        try {
+            mode = ScriptClassifier.classify(scriptFile, source);
+        } catch (IllegalArgumentException e) {
+            log.warn("Exception during script classification for file: {}", scriptFile, e);
+            return null;
+        }
+
+        return switch (mode) {
+            case LEGACY -> loadLegacyScript(scriptFile);
+            case ESM, COMMONJS -> loadModuleScript(scriptFile);
+        };
+    }
+
+    private LegacyScriptHandle loadLegacyScript(Path scriptFile) {
         ScriptEngine engine = sef.getScriptEngine();
         if (!(engine instanceof GraalJSScriptEngine graalScriptEngine)) {
             throw new IllegalStateException("ScriptEngineFactory did not provide a GraalJSScriptEngine");
@@ -58,23 +109,23 @@ public abstract class AbstractScriptManager {
         enableScriptHostAccess(graalScriptEngine);
 
         try (BufferedReader br = Files.newBufferedReader(scriptFile, StandardCharsets.UTF_8)) {
+            ScriptRuntimeSupport.installGlobals(engine, scriptFile);
             engine.eval(br);
         } catch (final ScriptException | IOException t) {
-            log.warn("Exception during script eval for file: {}", path, t);
+            log.warn("Exception during script eval for file: {}", scriptFile, t);
             return null;
         }
 
-        return graalScriptEngine;
+        return new LegacyScriptHandle(engine, (Invocable) graalScriptEngine);
     }
 
-    protected ScriptEngine getInvocableScriptEngine(String path, Client c) {
-        ScriptEngine engine = c.getScriptEngine("scripts/" + path);
-        if (engine == null) {
-            engine = getInvocableScriptEngine(path);
-            c.setScriptEngine(path, engine);
+    private ModuleScriptHandle loadModuleScript(Path scriptFile) {
+        try {
+            return ModuleScriptHandle.load(scriptFile);
+        } catch (ScriptLoadException e) {
+            log.warn("Exception during module script eval for file: {}", scriptFile, e);
+            return null;
         }
-
-        return engine;
     }
 
     /**
@@ -86,7 +137,11 @@ public abstract class AbstractScriptManager {
         bindings.put("polyglot.js.allowHostClassLookup", true);
     }
 
-    protected void resetContext(String path, Client c) {
-        c.removeScriptEngine("scripts/" + path);
+    protected void resetContext(String directory, String identifier, Client c) {
+        c.removeScriptHandle(cacheKey(scriptPathResolver.resolveEntry(directory, identifier)));
+    }
+
+    private static String cacheKey(Path scriptFile) {
+        return scriptFile.normalize().toString();
     }
 }

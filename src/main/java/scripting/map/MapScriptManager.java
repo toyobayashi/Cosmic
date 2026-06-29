@@ -26,8 +26,9 @@ import client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractScriptManager;
+import scripting.ScriptHandle;
+import scripting.ScriptInvocationContext;
 
-import javax.script.Invocable;
 import javax.script.ScriptException;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,13 +37,16 @@ public class MapScriptManager extends AbstractScriptManager {
     private static final Logger log = LoggerFactory.getLogger(MapScriptManager.class);
     private static final MapScriptManager instance = new MapScriptManager();
 
-    private final Map<String, Invocable> scripts = new HashMap<>();
+    private final Map<String, ScriptHandle> scripts = new HashMap<>();
 
     public static MapScriptManager getInstance() {
         return instance;
     }
 
     public void reloadScripts() {
+        for (ScriptHandle handle : scripts.values()) {
+            handle.close();
+        }
         scripts.clear();
     }
 
@@ -57,10 +61,11 @@ public class MapScriptManager extends AbstractScriptManager {
             }
         }
 
-        Invocable iv = scripts.get(mapScriptPath);
-        if (iv != null) {
+        ScriptHandle handle = scripts.get(mapScriptPath);
+        if (handle != null) {
             try {
-                iv.invokeFunction("start", new MapScriptMethods(c));
+                MapScriptMethods methods = new MapScriptMethods(c);
+                handle.invoke("start", ScriptInvocationContext.of("msm", methods), methods);
                 return true;
             } catch (final ScriptException | NoSuchMethodException e) {
                 e.printStackTrace();
@@ -68,13 +73,14 @@ public class MapScriptManager extends AbstractScriptManager {
         }
 
         try {
-            iv = (Invocable) getInvocableScriptEngine("map/" + mapScriptPath + ".js");
-            if (iv == null) {
+            handle = loadScript("map", mapScriptPath);
+            if (handle == null) {
                 return false;
             }
 
-            scripts.put(mapScriptPath, iv);
-            iv.invokeFunction("start", new MapScriptMethods(c));
+            scripts.put(mapScriptPath, handle);
+            MapScriptMethods methods = new MapScriptMethods(c);
+            handle.invoke("start", ScriptInvocationContext.of("msm", methods), methods);
             return true;
         } catch (final Exception e) {
             log.error("Error running map script {}", mapScriptPath, e);
