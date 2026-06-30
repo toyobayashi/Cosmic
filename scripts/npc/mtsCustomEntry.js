@@ -221,14 +221,25 @@ function skipBeginnerQuests() {
         return;
     }
 
-    while (cm.getLevel() < selectedQuestSkipTarget[1]) {
-        cm.getPlayer().levelUp(false);
+    if (cm.getJobId() == 0) {
+        if (!prepareExplorerBeginnerQuests()) {
+            cm.dispose();
+            return;
+        }
+    } else if (cm.getJobId() == 1000) {
+        if (!prepareCygnusFirstJobQuests()) {
+            cm.dispose();
+            return;
+        }
+    } else if (cm.getJobId() == 2000) {
+        if (!prepareAranFirstJobQuests()) {
+            cm.dispose();
+            return;
+        }
     }
 
-    if (cm.getJobId() == 1000) {
-        prepareCygnusFirstJobQuests();
-    } else if (cm.getJobId() == 2000) {
-        prepareAranFirstJobQuests();
+    while (cm.getLevel() < selectedQuestSkipTarget[1]) {
+        cm.getPlayer().levelUp(false);
     }
 
     if (selectedQuestSkipTarget.length > 3) {
@@ -239,22 +250,105 @@ function skipBeginnerQuests() {
     cm.dispose();
 }
 
+function prepareExplorerBeginnerQuests() {
+    var completedBeginnerQuests = [
+        1000, 1001, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010,
+        1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020,
+        1021, 1022, 1023, 1024, 1025, 1026, 1027, 1028, 1029, 1030,
+        1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040,
+        1041, 1042, 1043, 1044, 1045, 1046, 1048
+    ];
+    var rewards = [
+        [3010000, 1], // Relaxer
+        [2010000, 8], // Apple
+        [2010009, 8], // Green Apple
+        [2000000, 20], // Red Potion
+        [2000003, 20], // Blue Potion
+        [2010002, 15], // Egg
+        [2010003, 15], // Orange
+        [2010001, 25], // Meat
+        [2010004, 25], // Lemon
+        [2000014, 100], // Sunrise Dew
+        [2000013, 100]  // Reindeer Milk
+    ];
+
+    if (!canHoldRewards(rewards)) {
+        cm.dropMessage(1, "Please make room for the beginner quest rewards first.");
+        return false;
+    }
+
+    for (var i = 0; i < completedBeginnerQuests.length; i++) {
+        cm.forceCompleteQuest(completedBeginnerQuests[i]);
+    }
+
+    giveRewards(rewards);
+    return true;
+}
+
 function prepareCygnusFirstJobQuests() {
     var completedPreludeQuests = [
         20000, 20001, 20002, 20003, 20004, 20005, 20006, 20007, 20008,
         20010, 20011, 20012, 20013, 20015, 20016, 20017, 20020, 20100
     ];
+    var rewards = [
+        [1142065, 1],  // Noblesse Medal
+        [2000020, 15], // Red Potion for Noblesse
+        [2000021, 15], // Blue Potion for Noblesse
+        [1002869, 2],  // Elegant Noblesse Hat
+        [1052177, 1],  // Elegant Noblesse Robe
+        [3010060, 1]   // Noblesse Chair
+    ];
+
+    if (!canHoldRewards(rewards)) {
+        cm.dropMessage(1, "Please make room for the beginner quest rewards first.");
+        return false;
+    }
 
     for (var i = 0; i < completedPreludeQuests.length; i++) {
         cm.forceCompleteQuest(completedPreludeQuests[i]);
     }
+
+    giveRewards(rewards);
+    return true;
 }
 
 function prepareAranFirstJobQuests() {
     var completedPreludeQuests = [21000, 21001, 21010, 21011, 21012, 21013, 21100];
+    var rewards = [
+        [2000022, 15], // Red Potion for Legend
+        [2000023, 15], // Blue Potion for Legend
+        [1302000, 1],  // Sword
+        [3010062, 1]   // Wooden Chair
+    ];
+
+    if (!canHoldRewards(rewards)) {
+        cm.dropMessage(1, "Please make room for the beginner quest rewards first.");
+        return false;
+    }
 
     for (var i = 0; i < completedPreludeQuests.length; i++) {
         cm.forceCompleteQuest(completedPreludeQuests[i]);
+    }
+
+    giveRewards(rewards);
+    return true;
+}
+
+function canHoldRewards(rewards) {
+    var itemIds = [];
+    var quantities = [];
+
+    for (var i = 0; i < rewards.length; i++) {
+        itemIds.push(rewards[i][0]);
+        quantities.push(rewards[i][1]);
+    }
+
+    return cm.canHoldAll(itemIds, quantities);
+}
+
+function giveRewards(rewards) {
+    for (var i = 0; i < rewards.length; i++) {
+        cm.gainItem(rewards[i][0], rewards[i][1]);
     }
 }
 
