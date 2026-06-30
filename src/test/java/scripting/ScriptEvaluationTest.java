@@ -86,7 +86,42 @@ public class ScriptEvaluationTest {
     }
 
     private static List<String> mtsEntryScriptPath() {
-        return List.of("npc/mtsCustomEntry.js");
+        return List.of("npc/mtsCustomEntry.mjs");
+    }
+
+    @Test
+    void sharedI18nTranslatesMessageEntriesByClientCodePage(@TempDir Path tempDir) throws Exception {
+        String i18nModule = Path.of("scripts", "lib", "i18n", "index.mjs").toAbsolutePath().normalize().toString();
+        Path entry = tempDir.resolve("entry.mjs");
+        Files.writeString(entry, """
+                import { defineMessages, localeForCodePage, translateForCodePage } from '%s';
+
+                const messages = defineMessages({
+                    main: {
+                        question: {
+                            en: 'Hello {name}',
+                            zhCN: '你好，{name}'
+                        }
+                    },
+                    fallback: {
+                        onlyEnglish: {
+                            en: 'Fallback {name}'
+                        }
+                    }
+                });
+
+                export function result(ctx) {
+                    return localeForCodePage(936) + '|'
+                        + translateForCodePage(messages.main.question, 936, { name: 'Codex' }) + '|'
+                        + translateForCodePage(messages.main.question, 1252, { name: 'Codex' }) + '|'
+                        + translateForCodePage(messages.fallback.onlyEnglish, 936, { name: 'Codex' });
+                }
+                """.formatted(i18nModule.replace("\\", "\\\\")), StandardCharsets.UTF_8);
+
+        try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
+            assertEquals("zhCN|你好，Codex|Hello Codex|Fallback Codex",
+                    handle.invoke("result", ScriptInvocationContext.empty()));
+        }
     }
 
     @ParameterizedTest
