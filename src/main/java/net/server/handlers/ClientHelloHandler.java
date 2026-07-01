@@ -12,7 +12,7 @@ public final class ClientHelloHandler implements PacketHandler {
     private static final Logger log = LoggerFactory.getLogger(ClientHelloHandler.class);
 
     public static final int MAGIC = 0x4B544B43;
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     public static final int CAPABILITY_EXP_TABLE = 0x1;
 
     @Override
@@ -31,7 +31,7 @@ public final class ClientHelloHandler implements PacketHandler {
         int version = Byte.toUnsignedInt(p.readByte());
         int capabilities = p.readInt();
         int codePage = Short.toUnsignedInt(p.readShort());
-        if (magic != MAGIC || version != VERSION) {
+        if (magic != MAGIC || version < 1 || version > VERSION) {
             log.debug("Client hello ignored: remote={} magic=0x{} version={}",
                     c.getRemoteAddress(),
                     Integer.toHexString(magic).toUpperCase(),
@@ -45,6 +45,9 @@ public final class ClientHelloHandler implements PacketHandler {
         c.setPacketCodePage(supportedCodePage
                 ? codePage
                 : PacketCharsets.DEFAULT_CODEPAGE);
+        if (version >= 2 && p.available() >= 2) {
+            c.setClientLanguage(p.readString());
+        }
         if (!supportedCodePage) {
             log.warn("Client hello used unsupported codepage: remote={} codepage={} effectiveCodepage={}",
                     c.getRemoteAddress(),

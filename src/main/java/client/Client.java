@@ -155,6 +155,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private int lang = 0;
     private int packetCodePage = PacketCharsets.DEFAULT_CODEPAGE;
     private Charset packetCharset = PacketCharsets.DEFAULT_CHARSET;
+    private String clientLanguage = "en";
     private boolean extendedClient = false;
     private int clientCapabilities = 0;
 
@@ -192,6 +193,24 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public Charset getPacketCharset() {
         return packetCharset;
+    }
+
+    public String getClientLanguage() {
+        return clientLanguage;
+    }
+
+    public void setClientLanguage(String clientLanguage) {
+        this.clientLanguage = normalizeClientLanguage(clientLanguage);
+    }
+
+    private static String normalizeClientLanguage(String clientLanguage) {
+        if (clientLanguage == null) {
+            return "en";
+        }
+        return switch (clientLanguage.trim().toLowerCase()) {
+            case "zh", "zh-cn", "zh_cn", "zhcn" -> "zhCN";
+            default -> "en";
+        };
     }
 
     public void setPacketCodePage(int packetCodePage) {

@@ -124,6 +124,76 @@ public class ScriptEvaluationTest {
         }
     }
 
+    @Test
+    void sharedI18nTranslatesMessageEntriesByClientLanguage(@TempDir Path tempDir) throws Exception {
+        String i18nModule = Path.of("scripts", "lib", "i18n", "index.mjs").toAbsolutePath().normalize().toString();
+        Path entry = tempDir.resolve("entry.mjs");
+        Files.writeString(entry, """
+                import { createI18n, defineMessages } from '%s';
+
+                const messages = defineMessages({
+                    main: {
+                        question: {
+                            en: 'Hello {name}',
+                            zhCN: '你好，{name}'
+                        }
+                    }
+                });
+
+                export function result(ctx) {
+                    const cm = {
+                        getClient() {
+                            return {
+                                getPacketCodePage() { return 1252; },
+                                getClientLanguage() { return 'zhCN'; }
+                            };
+                        }
+                    };
+                    const i18n = createI18n(cm);
+                    return i18n.locale + '|' + i18n.t(messages.main.question, { name: 'Codex' });
+                }
+                """.formatted(i18nModule.replace("\\", "\\\\")), StandardCharsets.UTF_8);
+
+        try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
+            assertEquals("zhCN|你好，Codex", handle.invoke("result", ScriptInvocationContext.empty()));
+        }
+    }
+
+    @Test
+    void sharedI18nReadsClientLanguageFromJavaClient(@TempDir Path tempDir) throws Exception {
+        String i18nModule = Path.of("scripts", "lib", "i18n", "index.mjs").toAbsolutePath().normalize().toString();
+        Path entry = tempDir.resolve("entry.mjs");
+        Files.writeString(entry, """
+                import { createI18n, defineMessages } from '%s';
+
+                const Client = Java.type('client.Client');
+                const messages = defineMessages({
+                    main: {
+                        question: {
+                            en: 'Hello {name}',
+                            zhCN: '你好，{name}'
+                        }
+                    }
+                });
+
+                export function result(ctx) {
+                    const client = Client.createMock();
+                    client.setClientLanguage('zh-CN');
+                    const cm = {
+                        getClient() {
+                            return client;
+                        }
+                    };
+                    const i18n = createI18n(cm);
+                    return i18n.locale + '|' + i18n.t(messages.main.question, { name: 'Codex' });
+                }
+                """.formatted(i18nModule.replace("\\", "\\\\")), StandardCharsets.UTF_8);
+
+        try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
+            assertEquals("zhCN|你好，Codex", handle.invoke("result", ScriptInvocationContext.empty()));
+        }
+    }
+
     @ParameterizedTest
     @MethodSource("portalScriptFilePaths")
     void portalScriptShouldEvaluate(String portalScriptPath) {

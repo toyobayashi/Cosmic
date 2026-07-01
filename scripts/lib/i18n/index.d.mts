@@ -14,6 +14,7 @@ export declare function defineMessages<const T extends MessageTree>(messages: T)
 export declare function createI18n(cm: {
     getClient(): {
         getPacketCodePage(): number;
+        getClientLanguage?(): string;
     };
 }): Readonly<{
     codePage: number;

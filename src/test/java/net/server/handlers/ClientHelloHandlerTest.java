@@ -22,7 +22,7 @@ class ClientHelloHandlerTest {
         Client client = Client.createMock();
         InPacket packet = Packets.buildInPacket(p -> {
             p.writeInt(ClientHelloHandler.MAGIC);
-            p.writeByte(ClientHelloHandler.VERSION);
+            p.writeByte(1);
             p.writeInt(0);
             p.writeShort(932);
         });
@@ -32,5 +32,22 @@ class ClientHelloHandlerTest {
         assertTrue(client.isExtendedClient());
         assertEquals(932, client.getPacketCodePage());
         assertEquals(0, client.getClientCapabilities());
+    }
+
+    @Test
+    void setsClientLanguageFromVersion2Hello() {
+        Client client = Client.createMock();
+        InPacket packet = Packets.buildInPacket(p -> {
+            p.writeInt(ClientHelloHandler.MAGIC);
+            p.writeByte(ClientHelloHandler.VERSION);
+            p.writeInt(0);
+            p.writeShort(1252);
+            p.writeString("zh-CN");
+        });
+
+        new ClientHelloHandler().handlePacket(packet, client);
+
+        assertEquals(1252, client.getPacketCodePage());
+        assertEquals("zhCN", client.getClientLanguage());
     }
 }

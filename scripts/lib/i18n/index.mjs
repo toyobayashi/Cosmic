@@ -9,7 +9,7 @@ export function defineMessages(messages) {
 
 export function createI18n(cm) {
     const codePage = getClientCodePage(cm);
-    const locale = localeForCodePage(codePage);
+    const locale = getClientLanguageLocale(cm);
 
     return Object.freeze({
         codePage,
@@ -35,6 +35,29 @@ export function translate(message, locale, values) {
 
 function getClientCodePage(cm) {
     return cm.getClient().getPacketCodePage();
+}
+
+function getClientLanguageLocale(cm) {
+    const client = cm.getClient();
+    let language = undefined;
+    try {
+        language = client.getClientLanguage();
+    } catch (_) {
+        language = undefined;
+    }
+    return normalizeLocale(language);
+}
+
+function normalizeLocale(locale) {
+    switch (String(locale ?? "").toLowerCase()) {
+        case "zh":
+        case "zh-cn":
+        case "zh_cn":
+        case "zhcn":
+            return Locale.ZH_CN;
+        default:
+            return Locale.EN;
+    }
 }
 
 function format(template, values) {
