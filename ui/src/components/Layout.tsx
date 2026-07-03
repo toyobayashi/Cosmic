@@ -14,6 +14,7 @@ import {
   CodeOutlined,
   ReadOutlined,
   LogoutOutlined,
+  DollarOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   EnvironmentOutlined,
@@ -44,6 +45,7 @@ export default function AppLayout() {
     { key: '/admin/commands', icon: <CodeOutlined />, label: 'Commands' },
     { key: '/admin/logs', icon: <ReadOutlined />, label: 'Server Logs' },
     { key: '/admin/map-query', icon: <EnvironmentOutlined />, label: 'Map Query' },
+    { key: '/admin/sponsor', icon: <DollarOutlined />, label: 'Sponsor' },
   ]
 
   const segments = location.pathname.split('/')

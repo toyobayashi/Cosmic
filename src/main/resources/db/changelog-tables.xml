@@ -105,4 +105,8 @@
         <sqlFile path="db/migrations/025-float-rates.sql"/>
     </changeSet>
 
+    <changeSet id="26" author="Toyo Li">
+        <sqlFile path="db/tables/026-sponsor.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

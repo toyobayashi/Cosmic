@@ -15,6 +15,7 @@ import Config from './pages/Config'
 import Commands from './pages/Commands'
 import LogsViewer from './pages/LogsViewer'
 import MapQuery from './pages/MapQuery'
+import Sponsor from './pages/Sponsor'
 import AppLayout from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="commands" element={<Commands />} />
         <Route path="logs" element={<LogsViewer />} />
         <Route path="map-query" element={<MapQuery />} />
+        <Route path="sponsor" element={<Sponsor />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
