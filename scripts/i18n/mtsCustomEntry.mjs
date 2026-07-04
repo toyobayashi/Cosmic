@@ -41,8 +41,8 @@ export const messages = defineMessages({
             zhCN: "感谢您愿意支持本服务器。赞助会用于服务器维护和运营成本，让大家可以继续在这里游玩。赞助前请您悉知，赞助行为属于自愿赠与，不属于充值或商品购买，#r不支持退款#k。作为感谢，赞助后您将#r获得相应数量的点券#k。请先扫赞赏码，#r留言中填写您的账号名#k #b{account}#k，完成付款后再点击#r创建赞助记录#k并在下一页填写您的实际付款金额，点券通常会在 24 小时内到账。您可以点击#r查看赞助记录#k来查看您的赞助记录。"
         },
         imageHint: {
-            en: "#fUI/tutorial.img/sponsor/qrcode#",
-            zhCN: "#fUI/tutorial.img/sponsor/qrcode#"
+            en: "#f__Remote/npc-images/sponsor/qrcode.png#",
+            zhCN: "#f__Remote/npc-images/sponsor/qrcode.png#"
         },
         pendingHeader: {
             en: "Pending sponsor records:",

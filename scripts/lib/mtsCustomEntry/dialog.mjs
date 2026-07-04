@@ -19,7 +19,7 @@ export function buildMainSelection(i18n, preJobBeginner, showSponsor) {
     return text;
 }
 
-export function buildSponsorSelection(i18n, account) {
+export function buildSponsorSelection(i18n, account, supportsRemoteAssets) {
     let text = ''; // "#e" + i18n.t(messages.sponsor.title) + "#n\r\n";
     text += i18n.t(messages.sponsor.account, { account }) + "\r\n";
 
@@ -27,7 +27,10 @@ export function buildSponsorSelection(i18n, account) {
     text += "  " + option(SponsorMenu.VIEW_RECORDS, i18n.t(messages.sponsor.viewRecordsOption));
     text += "  " + option(SponsorMenu.BACK, i18n.t(messages.sponsor.backOption));
 
-    text += "#k\r\n\r\n\r\n" + i18n.t(messages.sponsor.imageHint) + "";
+    text += "#k";
+    if (supportsRemoteAssets) {
+        text += "\r\n\r\n\r\n" + i18n.t(messages.sponsor.imageHint);
+    }
     return text;
 }
 

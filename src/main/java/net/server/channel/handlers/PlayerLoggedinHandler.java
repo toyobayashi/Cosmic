@@ -21,6 +21,8 @@
  */
 package net.server.channel.handlers;
 
+import api.service.RemoteAssetSession;
+import api.service.RemoteAssetSessionService;
 import client.BuddyList;
 import client.BuddylistEntry;
 import client.Character;
@@ -51,6 +53,7 @@ import net.server.coordinator.world.EventRecallCoordinator;
 import net.server.guild.Alliance;
 import net.server.guild.Guild;
 import net.server.guild.GuildPackets;
+import net.server.handlers.ClientHelloHandler;
 import net.server.world.PartyCharacter;
 import net.server.world.PartyOperation;
 import net.server.world.World;
@@ -158,6 +161,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             }
             c.setPacketCodePage(server.takeCharacterCodePageInTransition(cid));
             c.setClientLanguage(server.takeCharacterClientLanguageInTransition(cid));
+            c.setClientCapabilities(server.takeCharacterClientCapabilitiesInTransition(cid));
 
             boolean newcomer = false;
             if (player == null) {
@@ -219,6 +223,11 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 c.setAccID(0);
                 c.sendPacket(PacketCreator.getAfterLoginError(10));
                 return;
+            }
+
+            if (c.hasClientCapability(ClientHelloHandler.CAPABILITY_REMOTE_ASSETS)) {
+                RemoteAssetSession session = RemoteAssetSessionService.getInstance().issueSession(c, player.getId());
+                c.sendPacket(PacketCreator.clientRemoteAssetSession(session));
             }
 
             if (!newcomer) {

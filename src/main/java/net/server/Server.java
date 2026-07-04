@@ -135,6 +135,7 @@ public class Server {
     private final Map<String, Integer> transitioningChars = new HashMap<>();
     private final Map<Integer, Integer> transitioningCharCodePages = new HashMap<>();
     private final Map<Integer, String> transitioningCharClientLanguages = new HashMap<>();
+    private final Map<Integer, Integer> transitioningCharClientCapabilities = new HashMap<>();
     private final List<Pair<Integer, String>> worldRecommendedList = new LinkedList<>();
     private final Map<Integer, Guild> guilds = new HashMap<>(100);
     private final Map<Client, Long> inLoginState = new HashMap<>(100);
@@ -1821,6 +1822,7 @@ public class Server {
             transitioningChars.put(remoteIp, charId);
             transitioningCharCodePages.put(charId, client.getPacketCodePage());
             transitioningCharClientLanguages.put(charId, client.getClientLanguage());
+            transitioningCharClientCapabilities.put(charId, client.getClientCapabilities());
         } finally {
             lgnWLock.unlock();
         }
@@ -1842,6 +1844,16 @@ public class Server {
             return transitioningCharClientLanguages.getOrDefault(charId, "en");
         } finally {
             transitioningCharClientLanguages.remove(charId);
+            lgnWLock.unlock();
+        }
+    }
+
+    public int takeCharacterClientCapabilitiesInTransition(int charId) {
+        lgnWLock.lock();
+        try {
+            return transitioningCharClientCapabilities.getOrDefault(charId, 0);
+        } finally {
+            transitioningCharClientCapabilities.remove(charId);
             lgnWLock.unlock();
         }
     }

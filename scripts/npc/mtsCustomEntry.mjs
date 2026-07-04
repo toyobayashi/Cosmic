@@ -21,6 +21,7 @@ import { messages } from "../i18n/mtsCustomEntry.mjs";
 
 const SponsorService = Java.type("api.service.SponsorService");
 const CreateSponsorOrderDTO = Java.type("api.model.dto.CreateSponsorOrderDTO");
+const ClientHelloHandler = Java.type("net.server.handlers.ClientHelloHandler");
 const MAX_SPONSOR_AMOUNT_YUAN = 200;
 
 let status = -1;
@@ -193,10 +194,14 @@ function openQuickStorage(cm, i18n) {
 
 function sendSponsorPrompt(cm, i18n) {
     try {
-        cm.sendSimple(buildSponsorSelection(i18n, cm.getClient().getAccountName()));
+        cm.sendSimple(buildSponsorSelection(i18n, cm.getClient().getAccountName(), supportsRemoteAssets(cm)));
     } catch (e) {
         cm.sendOk(i18n.t(messages.sponsor.createFailed));
     }
+}
+
+function supportsRemoteAssets(cm) {
+    return cm.getClient().hasClientCapability(ClientHelloHandler.CAPABILITY_REMOTE_ASSETS);
 }
 
 function handleSponsorSelection(cm, i18n, selection) {

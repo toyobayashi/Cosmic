@@ -14,6 +14,7 @@ public final class ClientHelloHandler implements PacketHandler {
     public static final int MAGIC = 0x4B544B43;
     public static final int VERSION = 2;
     public static final int CAPABILITY_EXP_TABLE = 0x1;
+    public static final int CAPABILITY_REMOTE_ASSETS = 0x2;
 
     @Override
     public boolean validateState(Client c) {
