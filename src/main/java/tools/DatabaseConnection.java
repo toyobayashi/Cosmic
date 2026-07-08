@@ -67,6 +67,9 @@ public class DatabaseConnection {
         config.addDataSourceProperty("cachePrepStmts", true);
         config.addDataSourceProperty("prepStmtCacheSize", 25);
         config.addDataSourceProperty("prepStmtCacheSqlLimit", 2048);
+        config.addDataSourceProperty("useUnicode", true);
+        config.addDataSourceProperty("characterEncoding", "UTF-8");
+        config.addDataSourceProperty("connectionCollation", "utf8mb4_unicode_ci");
 
         return config;
     }

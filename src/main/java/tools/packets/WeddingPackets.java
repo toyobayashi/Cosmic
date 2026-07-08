@@ -7,18 +7,21 @@
 package tools.packets;
 
 import client.Character;
+import client.Client;
 import client.inventory.Item;
 import constants.id.ItemId;
 import constants.id.MapId;
 import net.opcodes.SendOpcode;
 import net.packet.OutPacket;
 import net.packet.Packet;
+import net.packet.PerClientPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.PacketCreator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * CField_Wedding, CField_WeddingPhoto, CWeddingMan, OnMarriageResult, and all Wedding/Marriage enum/structs.
@@ -29,6 +32,10 @@ import java.util.List;
  */
 public class WeddingPackets extends PacketCreator {
     private static final Logger log = LoggerFactory.getLogger(WeddingPackets.class);
+
+    private static Packet perClientPacket(Function<Client, Packet> factory) {
+        return new PerClientPacket(factory, () -> factory.apply(Client.createMock()));
+    }
 
     /*
         00000000 CWeddingMan     struc ; (sizeof=0x104)
@@ -210,7 +217,11 @@ public class WeddingPackets extends PacketCreator {
      * @return mplew
      */
     public static Packet onMarriageRequest(String name, int playerid) {
-        OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_REQUEST);
+        return perClientPacket(c -> onMarriageRequest(c, name, playerid));
+    }
+
+    private static Packet onMarriageRequest(Client c, String name, int playerid) {
+        OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_REQUEST, c.getPacketCharset());
         p.writeByte(0); //mode, 0 = engage, 1 = cancel, 2 = answer.. etc
         p.writeString(name); // name
         p.writeInt(playerid); // playerid
@@ -279,7 +290,11 @@ public class WeddingPackets extends PacketCreator {
      * @return mplew
      */
     public static Packet OnMarriageResult(int marriageId, Character chr, boolean wedding) {
-        OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_RESULT);
+        return perClientPacket(c -> onMarriageResult(c, marriageId, chr, wedding));
+    }
+
+    private static Packet onMarriageResult(Client c, int marriageId, Character chr, boolean wedding) {
+        OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_RESULT, c.getPacketCharset());
         p.writeByte(11);
         p.writeInt(marriageId);
         p.writeInt(chr.getGender() == 0 ? chr.getId() : chr.getPartnerId());
@@ -357,7 +372,11 @@ public class WeddingPackets extends PacketCreator {
      * @return mplew
      */
     public static Packet sendWeddingInvitation(String groom, String bride) {
-        OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_RESULT);
+        return perClientPacket(c -> sendWeddingInvitation(c, groom, bride));
+    }
+
+    private static Packet sendWeddingInvitation(Client c, String groom, String bride) {
+        OutPacket p = OutPacket.create(SendOpcode.MARRIAGE_RESULT, c.getPacketCharset());
         p.writeByte(15);
         p.writeString(groom);
         p.writeString(bride);
@@ -380,7 +399,11 @@ public class WeddingPackets extends PacketCreator {
      * @return mplew
      */
     public static Packet onWeddingGiftResult(byte mode, List<String> itemnames, List<Item> items) {
-        OutPacket p = OutPacket.create(SendOpcode.WEDDING_GIFT_RESULT);
+        return perClientPacket(c -> onWeddingGiftResult(c, mode, itemnames, items));
+    }
+
+    private static Packet onWeddingGiftResult(Client c, byte mode, List<String> itemnames, List<Item> items) {
+        OutPacket p = OutPacket.create(SendOpcode.WEDDING_GIFT_RESULT, c.getPacketCharset());
         p.writeByte(mode);
         switch (mode) {
             case 0xC: // 12 : You cannot give more than one present for each wishlist 

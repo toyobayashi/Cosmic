@@ -41,7 +41,7 @@ public final class CharInfoRequestHandler extends AbstractPacketHandler {
                 if (c.getPlayer().getId() != player.getId()) {
                     player.exportExcludedItems(c);
                 }
-                c.sendPacket(PacketCreator.charInfo(player));
+                c.sendPacket(PacketCreator.charInfo(c, player));
             }
         }
     }

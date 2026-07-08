@@ -722,7 +722,7 @@ public class PacketCreator {
         Server.getInstance().loadAccountCharacters(c);    // locks the login session until data is recovered from the cache or the DB.
         Server.getInstance().loadAccountStorages(c);
 
-        final OutPacket p = OutPacket.create(SendOpcode.LOGIN_STATUS);
+        final OutPacket p = OutPacket.create(SendOpcode.LOGIN_STATUS, c.getPacketCharset());
         p.writeInt(0);
         p.writeShort(0);
         p.writeInt(c.getAccID());
@@ -2732,6 +2732,13 @@ public class PacketCreator {
         return p;
     }
 
+    public static Packet charNameResponse(Client c, String charname, boolean nameUsed) {
+        final OutPacket p = OutPacket.create(SendOpcode.CHAR_NAME_RESPONSE, c.getPacketCharset());
+        p.writeString(charname);
+        p.writeByte(nameUsed ? 1 : 0);
+        return p;
+    }
+
     public static Packet addNewCharEntry(Character chr) {
         final OutPacket p = OutPacket.create(SendOpcode.ADD_NEW_CHAR_ENTRY);
         p.writeByte(0);
@@ -2791,9 +2798,7 @@ public class PacketCreator {
      * @param isSelf
      * @return
      */
-    public static Packet charInfo(Character chr) {
-        //3D 00 0A 43 01 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-        final OutPacket p = OutPacket.create(SendOpcode.CHAR_INFO);
+    private static void writeCharInfo(OutPacket p, Character chr) {
         p.writeInt(chr.getId());
         p.writeByte(chr.getLevel());
         p.writeShort(chr.getJob().getId());
@@ -2870,6 +2875,19 @@ public class PacketCreator {
         for (Short s : medalQuests) {
             p.writeShort(s);
         }
+    }
+
+    public static Packet charInfo(Character chr) {
+        //3D 00 0A 43 01 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        final OutPacket p = OutPacket.create(SendOpcode.CHAR_INFO);
+        writeCharInfo(p, chr);
+        return p;
+    }
+
+    public static Packet charInfo(Client c, Character chr) {
+        //3D 00 0A 43 01 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        final OutPacket p = OutPacket.create(SendOpcode.CHAR_INFO, c.getPacketCharset());
+        writeCharInfo(p, chr);
         return p;
     }
 
@@ -3361,7 +3379,7 @@ public class PacketCreator {
     }
 
     public static Packet getTradeStart(Client c, Trade trade, byte number) {
-        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
+        final OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION, c.getPacketCharset());
         p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
         p.writeByte(3);
         p.writeByte(2);
@@ -3830,7 +3848,11 @@ public class PacketCreator {
     }
 
     public static Packet partyInvite(Character from) {
-        final OutPacket p = OutPacket.create(SendOpcode.PARTY_OPERATION);
+        return perClientPacket(c -> partyInvite(c, from));
+    }
+
+    private static Packet partyInvite(Client c, Character from) {
+        final OutPacket p = OutPacket.create(SendOpcode.PARTY_OPERATION, c.getPacketCharset());
         p.writeByte(4);
         p.writeInt(from.getParty().getId());
         p.writeString(from.getName());
@@ -3839,7 +3861,11 @@ public class PacketCreator {
     }
 
     public static Packet partySearchInvite(Character from) {
-        final OutPacket p = OutPacket.create(SendOpcode.PARTY_OPERATION);
+        return perClientPacket(c -> partySearchInvite(c, from));
+    }
+
+    private static Packet partySearchInvite(Client c, Character from) {
+        final OutPacket p = OutPacket.create(SendOpcode.PARTY_OPERATION, c.getPacketCharset());
         p.writeByte(4);
         p.writeInt(from.getParty().getId());
         p.writeString("PS: " + from.getName());
@@ -3875,7 +3901,11 @@ public class PacketCreator {
      * @return
      */
     public static Packet partyStatusMessage(int message, String charname) {
-        final OutPacket p = OutPacket.create(SendOpcode.PARTY_OPERATION);
+        return perClientPacket(c -> partyStatusMessage(c, message, charname));
+    }
+
+    private static Packet partyStatusMessage(Client c, int message, String charname) {
+        final OutPacket p = OutPacket.create(SendOpcode.PARTY_OPERATION, c.getPacketCharset());
         p.writeByte(message);
         p.writeString(charname);
         return p;
@@ -3947,7 +3977,11 @@ public class PacketCreator {
     }
 
     public static Packet updateParty(int forChannel, Party party, PartyOperation op, PartyCharacter target) {
-        final OutPacket p = OutPacket.create(SendOpcode.PARTY_OPERATION);
+        return perClientPacket(c -> updateParty(c, forChannel, party, op, target));
+    }
+
+    private static Packet updateParty(Client c, int forChannel, Party party, PartyOperation op, PartyCharacter target) {
+        final OutPacket p = OutPacket.create(SendOpcode.PARTY_OPERATION, c.getPacketCharset());
         switch (op) {
             case DISBAND:
             case EXPEL:
@@ -4157,7 +4191,11 @@ public class PacketCreator {
     }
 
     public static Packet updateBuddylist(Collection<BuddylistEntry> buddylist) {
-        OutPacket p = OutPacket.create(SendOpcode.BUDDYLIST);
+        return perClientPacket(c -> updateBuddylist(c, buddylist));
+    }
+
+    private static Packet updateBuddylist(Client c, Collection<BuddylistEntry> buddylist) {
+        OutPacket p = OutPacket.create(SendOpcode.BUDDYLIST, c.getPacketCharset());
         p.writeByte(7);
         p.writeByte(buddylist.size());
         for (BuddylistEntry buddy : buddylist) {
@@ -4183,17 +4221,21 @@ public class PacketCreator {
     }
 
     public static Packet requestBuddylistAdd(int chrIdFrom, int chrId, String nameFrom) {
-        OutPacket p = OutPacket.create(SendOpcode.BUDDYLIST);
+        return perClientPacket(c -> requestBuddylistAdd(c, chrIdFrom, chrId, nameFrom));
+    }
+
+    private static Packet requestBuddylistAdd(Client c, int chrIdFrom, int chrId, String nameFrom) {
+        OutPacket p = OutPacket.create(SendOpcode.BUDDYLIST, c.getPacketCharset());
         p.writeByte(9);
         p.writeInt(chrIdFrom);
         p.writeString(nameFrom);
         p.writeInt(chrIdFrom);
-        p.writeFixedString(nameFrom, 11);
+        p.writeFixedString(nameFrom, 13);
         p.writeByte(0x09);
         p.writeByte(0xf0);
         p.writeByte(0x01);
         p.writeInt(0x0f);
-        p.writeFixedString("Default Group");
+        p.writeFixedString("Default Group", 13);
         p.writeByte(0);
         p.writeInt(chrId);
         return p;
@@ -4405,7 +4447,11 @@ public class PacketCreator {
     }
 
     public static Packet messengerInvite(String from, int messengerid) {
-        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER);
+        return perClientPacket(c -> messengerInvite(c, from, messengerid));
+    }
+
+    private static Packet messengerInvite(Client c, String from, int messengerid) {
+        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER, c.getPacketCharset());
         p.writeByte(0x03);
         p.writeString(from);
         p.writeByte(0);
@@ -4425,7 +4471,11 @@ public class PacketCreator {
         */
 
     public static Packet OnCoupleMessage(String fiance, String text, boolean spouse) {
-        OutPacket p = OutPacket.create(SendOpcode.SPOUSE_CHAT);
+        return perClientPacket(c -> onCoupleMessage(c, fiance, text, spouse));
+    }
+
+    private static Packet onCoupleMessage(Client c, String fiance, String text, boolean spouse) {
+        OutPacket p = OutPacket.create(SendOpcode.SPOUSE_CHAT, c.getPacketCharset());
         p.writeByte(spouse ? 5 : 4); // v2 = CInPacket::Decode1(a1) - 4;
         if (spouse) { // if ( v2 ) {
             p.writeString(fiance);
@@ -4436,7 +4486,11 @@ public class PacketCreator {
     }
 
     public static Packet addMessengerPlayer(String from, Character chr, int position, int channel) {
-        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER);
+        return perClientPacket(c -> addMessengerPlayer(c, from, chr, position, channel));
+    }
+
+    private static Packet addMessengerPlayer(Client c, String from, Character chr, int position, int channel) {
+        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER, c.getPacketCharset());
         p.writeByte(0x00);
         p.writeByte(position);
         addCharLook(p, chr, true);
@@ -4454,7 +4508,11 @@ public class PacketCreator {
     }
 
     public static Packet updateMessengerPlayer(String from, Character chr, int position, int channel) {
-        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER);
+        return perClientPacket(c -> updateMessengerPlayer(c, from, chr, position, channel));
+    }
+
+    private static Packet updateMessengerPlayer(Client c, String from, Character chr, int position, int channel) {
+        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER, c.getPacketCharset());
         p.writeByte(0x07);
         p.writeByte(position);
         addCharLook(p, chr, true);
@@ -4472,14 +4530,22 @@ public class PacketCreator {
     }
 
     public static Packet messengerChat(String text) {
-        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER);
+        return perClientPacket(c -> messengerChat(c, text));
+    }
+
+    private static Packet messengerChat(Client c, String text) {
+        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER, c.getPacketCharset());
         p.writeByte(0x06);
         p.writeString(text);
         return p;
     }
 
     public static Packet messengerNote(String text, int mode, int mode2) {
-        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER);
+        return perClientPacket(c -> messengerNote(c, text, mode, mode2));
+    }
+
+    private static Packet messengerNote(Client c, String text, int mode, int mode2) {
+        final OutPacket p = OutPacket.create(SendOpcode.MESSENGER, c.getPacketCharset());
         p.writeByte(mode);
         p.writeString(text);
         p.writeByte(mode2);
@@ -4670,6 +4736,17 @@ public class PacketCreator {
 
     public static Packet showAllCharacterInfo(int worldid, List<Character> chars, boolean usePic) {
         final OutPacket p = OutPacket.create(SendOpcode.VIEW_ALL_CHAR);
+        writeShowAllCharacterInfo(p, worldid, chars, usePic);
+        return p;
+    }
+
+    public static Packet showAllCharacterInfo(Client c, int worldid, List<Character> chars, boolean usePic) {
+        final OutPacket p = OutPacket.create(SendOpcode.VIEW_ALL_CHAR, c.getPacketCharset());
+        writeShowAllCharacterInfo(p, worldid, chars, usePic);
+        return p;
+    }
+
+    private static void writeShowAllCharacterInfo(OutPacket p, int worldid, List<Character> chars, boolean usePic) {
         p.writeByte(0);
         p.writeByte(worldid);
         p.writeByte(chars.size());
@@ -4677,7 +4754,6 @@ public class PacketCreator {
             addCharEntry(p, chr, true);
         }
         p.writeByte(usePic ? 1 : 2);
-        return p;
     }
 
     public static Packet updateMount(int charid, Mount mount, boolean levelup) {
@@ -4705,7 +4781,7 @@ public class PacketCreator {
     }
 
     public static Packet getMiniGame(Client c, MiniGame minigame, boolean owner, int piece) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
+        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION, c.getPacketCharset());
         p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
         p.writeByte(1);
         p.writeByte(0);
@@ -4904,7 +4980,7 @@ public class PacketCreator {
     }
 
     public static Packet getMatchCard(Client c, MiniGame minigame, boolean owner, int piece) {
-        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION);
+        OutPacket p = OutPacket.create(SendOpcode.PLAYER_INTERACTION, c.getPacketCharset());
         p.writeByte(PlayerInteractionHandler.Action.ROOM.getCode());
         p.writeByte(2);
         p.writeByte(2);
@@ -5131,7 +5207,7 @@ public class PacketCreator {
     public static Packet owlOfMinerva(Client c, int itemId, List<Pair<PlayerShopItem, AbstractMapObject>> hmsAvailable) {
         byte itemType = ItemConstants.getInventoryType(itemId).getType();
 
-        OutPacket p = OutPacket.create(SendOpcode.SHOP_SCANNER_RESULT);
+        OutPacket p = OutPacket.create(SendOpcode.SHOP_SCANNER_RESULT, c.getPacketCharset());
         p.writeByte(6);
         p.writeInt(0);
         p.writeInt(itemId);
@@ -5582,7 +5658,7 @@ public class PacketCreator {
             9: unknown error
         */
     public static Packet sendWorldTransferRules(int error, Client c) {
-        final OutPacket p = OutPacket.create(SendOpcode.CASHSHOP_CHECK_TRANSFER_WORLD_POSSIBLE_RESULT);
+        final OutPacket p = OutPacket.create(SendOpcode.CASHSHOP_CHECK_TRANSFER_WORLD_POSSIBLE_RESULT, c.getPacketCharset());
         p.writeInt(0); //ignored
         p.writeByte(error);
         p.writeInt(0);
@@ -5626,6 +5702,14 @@ public class PacketCreator {
 
     public static Packet sendNameTransferCheck(String availableName, boolean canUseName) {
         final OutPacket p = OutPacket.create(SendOpcode.CASHSHOP_CHECK_NAME_CHANGE);
+        //Send provided name back to client to add to temporary cache of checked & accepted names
+        p.writeString(availableName);
+        p.writeBool(!canUseName);
+        return p;
+    }
+
+    public static Packet sendNameTransferCheck(Client c, String availableName, boolean canUseName) {
+        final OutPacket p = OutPacket.create(SendOpcode.CASHSHOP_CHECK_NAME_CHANGE, c.getPacketCharset());
         //Send provided name back to client to add to temporary cache of checked & accepted names
         p.writeString(availableName);
         p.writeBool(!canUseName);
@@ -5801,7 +5885,11 @@ public class PacketCreator {
      * @return packet structure
      */
     public static Packet getFindResult(Character target, byte type, int fieldOrChannel, byte flag) {
-        OutPacket p = OutPacket.create(SendOpcode.WHISPER);
+        return perClientPacket(c -> getFindResult(c, target, type, fieldOrChannel, flag));
+    }
+
+    private static Packet getFindResult(Client c, Character target, byte type, int fieldOrChannel, byte flag) {
+        OutPacket p = OutPacket.create(SendOpcode.WHISPER, c.getPacketCharset());
 
         p.writeByte(flag | WhisperFlag.RESULT);
         p.writeString(target.getName());
@@ -5817,7 +5905,11 @@ public class PacketCreator {
     }
 
     public static Packet getWhisperResult(String target, boolean success) {
-        OutPacket p = OutPacket.create(SendOpcode.WHISPER);
+        return perClientPacket(c -> getWhisperResult(c, target, success));
+    }
+
+    private static Packet getWhisperResult(Client c, String target, boolean success) {
+        OutPacket p = OutPacket.create(SendOpcode.WHISPER, c.getPacketCharset());
         p.writeByte(WhisperFlag.WHISPER | WhisperFlag.RESULT);
         p.writeString(target);
         p.writeBool(success);
@@ -5825,7 +5917,11 @@ public class PacketCreator {
     }
 
     public static Packet getWhisperReceive(String sender, int channel, boolean fromAdmin, String message) {
-        OutPacket p = OutPacket.create(SendOpcode.WHISPER);
+        return perClientPacket(c -> getWhisperReceive(c, sender, channel, fromAdmin, message));
+    }
+
+    private static Packet getWhisperReceive(Client c, String sender, int channel, boolean fromAdmin, String message) {
+        OutPacket p = OutPacket.create(SendOpcode.WHISPER, c.getPacketCharset());
         p.writeByte(WhisperFlag.WHISPER | WhisperFlag.RECEIVE);
         p.writeString(sender);
         p.writeByte(channel);
@@ -7232,7 +7328,7 @@ public class PacketCreator {
     }
 
     public static Packet openCashShop(Client c, boolean mts) throws Exception {
-        final OutPacket p = OutPacket.create(mts ? SendOpcode.SET_ITC : SendOpcode.SET_CASH_SHOP);
+        final OutPacket p = OutPacket.create(mts ? SendOpcode.SET_ITC : SendOpcode.SET_CASH_SHOP, c.getPacketCharset());
 
         addCharacterInfo(p, c.getPlayer());
 

@@ -54,4 +54,8 @@
         <sqlFile path="db/migrations/162-webadmin-default.sql"/>
     </changeSet>
 
+    <changeSet id="163" author="Toyo Li">
+        <sqlFile path="db/migrations/163-utf8mb4.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

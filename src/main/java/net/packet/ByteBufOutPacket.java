@@ -7,7 +7,12 @@ import net.jcip.annotations.NotThreadSafe;
 import net.opcodes.SendOpcode;
 
 import java.awt.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 
 @NotThreadSafe
 public class ByteBufOutPacket implements OutPacket {
@@ -91,21 +96,39 @@ public class ByteBufOutPacket implements OutPacket {
 
     @Override
     public void writeString(String value) {
-        byte[] bytes = value.getBytes(charset);
+        byte[] bytes = encodeString(value);
         writeShort(bytes.length);
         writeBytes(bytes);
     }
 
     @Override
     public void writeFixedString(String value) {
-        writeBytes(value.getBytes(charset));
+        writeBytes(encodeString(value));
     }
 
     @Override
     public void writeFixedString(String value, int byteLength) {
-        byte[] raw = value.getBytes(charset);
+        int maxPayloadLength = Math.max(byteLength - 1, 0);
+        int payloadLength = 0;
+        StringBuilder payload = new StringBuilder();
+
+        for (int i = 0; i < value.length();) {
+            int codePoint = value.codePointAt(i);
+            String next = new String(Character.toChars(codePoint));
+            int nextEncodedLength = encodeString(next).length;
+
+            if (payloadLength + nextEncodedLength > maxPayloadLength) {
+                break;
+            }
+
+            payloadLength += nextEncodedLength;
+            payload.appendCodePoint(codePoint);
+            i += Character.charCount(codePoint);
+        }
+
+        byte[] raw = encodeString(payload.toString());
         byte[] fixed = new byte[byteLength];
-        System.arraycopy(raw, 0, fixed, 0, Math.min(raw.length, Math.max(byteLength - 1, 0)));
+        System.arraycopy(raw, 0, fixed, 0, Math.min(raw.length, maxPayloadLength));
         writeBytes(fixed);
     }
 
@@ -123,5 +146,19 @@ public class ByteBufOutPacket implements OutPacket {
     @Override
     public boolean equals(Object o) {
         return o instanceof ByteBufOutPacket other && byteBuf.equals(other.byteBuf);
+    }
+
+    private byte[] encodeString(String value) {
+        CharsetEncoder encoder = charset.newEncoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE);
+        try {
+            ByteBuffer encoded = encoder.encode(CharBuffer.wrap(value));
+            byte[] bytes = new byte[encoded.remaining()];
+            encoded.get(bytes);
+            return bytes;
+        } catch (CharacterCodingException e) {
+            return value.getBytes(charset);
+        }
     }
 }

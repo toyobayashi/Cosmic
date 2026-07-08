@@ -57,7 +57,7 @@ public final class ViewAllCharHandler extends AbstractPacketHandler {
 
             final boolean usePic = YamlConfig.config.server.ENABLE_PIC && !c.canBypassPic();
             worldChrs.forEach((worldId, chrs) ->
-                    c.sendPacket(PacketCreator.showAllCharacterInfo(worldId, chrs, usePic))
+                    c.sendPacket(PacketCreator.showAllCharacterInfo(c, worldId, chrs, usePic))
             );
         } catch (Exception e) {
             e.printStackTrace();

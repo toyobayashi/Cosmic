@@ -106,7 +106,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
 
             ps.setInt(1, c.getPlayer().getGuildId());
             try (ResultSet rs = ps.executeQuery()) {
-                c.sendPacket(GuildPackets.BBSThreadList(rs, start));
+                c.sendPacket(GuildPackets.BBSThreadList(c, rs, start));
             }
         } catch (SQLException se) {
             se.printStackTrace();
@@ -316,7 +316,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                         ps2.setInt(1, !bIsThreadIdLocal ? threadid : threadRS.getInt("threadid"));
                         repliesRS = ps2.executeQuery();
                     }
-                    client.sendPacket(GuildPackets.showThread(bIsThreadIdLocal ? threadid : threadRS.getInt("localthreadid"), threadRS, repliesRS));
+                    client.sendPacket(GuildPackets.showThread(client, bIsThreadIdLocal ? threadid : threadRS.getInt("localthreadid"), threadRS, repliesRS));
                 }
             }
         } catch (SQLException se) {

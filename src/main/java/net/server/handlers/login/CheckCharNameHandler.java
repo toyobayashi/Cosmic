@@ -32,6 +32,6 @@ public final class CheckCharNameHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         String name = p.readString();
-        c.sendPacket(PacketCreator.charNameResponse(name, !Character.canCreateChar(name, c.getPacketCharset())));
+        c.sendPacket(PacketCreator.charNameResponse(c, name, !Character.canCreateChar(name, c.getPacketCharset())));
     }
 }
