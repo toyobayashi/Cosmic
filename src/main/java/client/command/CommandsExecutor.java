@@ -84,6 +84,7 @@ import client.command.commands.gm2.ReachCommand;
 import client.command.commands.gm2.RechargeCommand;
 import client.command.commands.gm2.ResetSkillCommand;
 import client.command.commands.gm2.SearchCommand;
+import client.command.commands.gm2.SetExpCommand;
 import client.command.commands.gm2.SetSlotCommand;
 import client.command.commands.gm2.SetStatCommand;
 import client.command.commands.gm2.SpCommand;
@@ -412,6 +413,7 @@ public class CommandsExecutor {
         addCommand("drop", 2, ItemDropCommand.class);
         addCommand("level", 2, LevelCommand.class);
         addCommand("levelpro", 2, LevelProCommand.class);
+        addCommand("exp", 2, SetExpCommand.class);
         addCommand("setslot", 2, SetSlotCommand.class);
         addCommand("setstat", 2, SetStatCommand.class);
         addCommand("maxstat", 2, MaxStatCommand.class);

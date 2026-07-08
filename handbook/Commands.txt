@@ -63,6 +63,7 @@ JrGM Commands:
 !drop - Spawn an item onto the ground.
 !level - Set your level.
 !levelpro - Set your level, one by one.
+!exp - Set, gain, or reduce your current exp value.
 !setslot - Set amount of inventory slots in all tabs.
 !setstat - Set all primary stats to new value.
 !maxstat - Max out all character stats.
