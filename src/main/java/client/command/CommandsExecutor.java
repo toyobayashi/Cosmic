@@ -86,6 +86,7 @@ import client.command.commands.gm2.ResetSkillCommand;
 import client.command.commands.gm2.SearchCommand;
 import client.command.commands.gm2.SetExpCommand;
 import client.command.commands.gm2.SetSlotCommand;
+import client.command.commands.gm2.SetSkillCommand;
 import client.command.commands.gm2.SetStatCommand;
 import client.command.commands.gm2.SpCommand;
 import client.command.commands.gm2.SummonCommand;
@@ -419,6 +420,7 @@ public class CommandsExecutor {
         addCommand("maxstat", 2, MaxStatCommand.class);
         addCommand("maxskill", 2, MaxSkillCommand.class);
         addCommand("resetskill", 2, ResetSkillCommand.class);
+        addCommand("setskill", 2, SetSkillCommand.class);
         addCommand("search", 2, SearchCommand.class);
         addCommand("jail", 2, JailCommand.class);
         addCommand("unjail", 2, UnJailCommand.class);
