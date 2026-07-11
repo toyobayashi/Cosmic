@@ -114,6 +114,7 @@ import server.movement.LifeMovementFragment;
 
 import java.awt.*;
 import java.net.InetAddress;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1703,7 +1704,11 @@ public class PacketCreator {
      * @return The general chat packet.
      */
     public static Packet getChatText(int cidfrom, String text, boolean gm, int show) {
-        final OutPacket p = OutPacket.create(SendOpcode.CHATTEXT);
+        return perClientPacket(c -> getChatText(cidfrom, text, gm, show, c.getPacketCharset()));
+    }
+
+    private static Packet getChatText(int cidfrom, String text, boolean gm, int show, Charset charset) {
+        final OutPacket p = OutPacket.create(SendOpcode.CHATTEXT, charset);
         p.writeInt(cidfrom);
         p.writeBool(gm);
         p.writeString(text);
@@ -3433,7 +3438,11 @@ public class PacketCreator {
      * @return
      */
     public static Packet getNPCTalk(int npc, byte msgType, String talk, String endBytes, byte speaker) {
-        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
+        return perClientPacket(c -> getNPCTalk(npc, msgType, talk, endBytes, speaker, c.getPacketCharset()));
+    }
+
+    private static Packet getNPCTalk(int npc, byte msgType, String talk, String endBytes, byte speaker, Charset charset) {
+        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK, charset);
         p.writeByte(4); // ?
         p.writeInt(npc);
         p.writeByte(msgType);
@@ -3444,7 +3453,11 @@ public class PacketCreator {
     }
 
     public static Packet getDimensionalMirror(String talk) {
-        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
+        return perClientPacket(c -> getDimensionalMirror(talk, c.getPacketCharset()));
+    }
+
+    private static Packet getDimensionalMirror(String talk, Charset charset) {
+        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK, charset);
         p.writeByte(4); // ?
         p.writeInt(NpcId.DIMENSIONAL_MIRROR);
         p.writeByte(0x0E);
@@ -3455,7 +3468,11 @@ public class PacketCreator {
     }
 
     public static Packet getNPCTalkStyle(int npc, String talk, int[] styles) {
-        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
+        return perClientPacket(c -> getNPCTalkStyle(npc, talk, styles, c.getPacketCharset()));
+    }
+
+    private static Packet getNPCTalkStyle(int npc, String talk, int[] styles, Charset charset) {
+        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK, charset);
         p.writeByte(4); // ?
         p.writeInt(npc);
         p.writeByte(7);
@@ -3469,7 +3486,11 @@ public class PacketCreator {
     }
 
     public static Packet getNPCTalkNum(int npc, String talk, int def, int min, int max) {
-        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
+        return perClientPacket(c -> getNPCTalkNum(npc, talk, def, min, max, c.getPacketCharset()));
+    }
+
+    private static Packet getNPCTalkNum(int npc, String talk, int def, int min, int max, Charset charset) {
+        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK, charset);
         p.writeByte(4); // ?
         p.writeInt(npc);
         p.writeByte(3);
@@ -3483,7 +3504,11 @@ public class PacketCreator {
     }
 
     public static Packet getNPCTalkText(int npc, String talk, String def) {
-        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
+        return perClientPacket(c -> getNPCTalkText(npc, talk, def, c.getPacketCharset()));
+    }
+
+    private static Packet getNPCTalkText(int npc, String talk, String def, Charset charset) {
+        final OutPacket p = OutPacket.create(SendOpcode.NPC_TALK, charset);
         p.writeByte(4); // Doesn't matter
         p.writeInt(npc);
         p.writeByte(2);
@@ -3496,7 +3521,11 @@ public class PacketCreator {
 
     // NPC Quiz packets thanks to Eric
     public static Packet OnAskQuiz(int nSpeakerTypeID, int nSpeakerTemplateID, int nResCode, String sTitle, String sProblemText, String sHintText, int nMinInput, int nMaxInput, int tRemainInitialQuiz) {
-        OutPacket p = OutPacket.create(SendOpcode.NPC_TALK);
+        return perClientPacket(c -> OnAskQuiz(nSpeakerTypeID, nSpeakerTemplateID, nResCode, sTitle, sProblemText, sHintText, nMinInput, nMaxInput, tRemainInitialQuiz, c.getPacketCharset()));
+    }
+
+    private static Packet OnAskQuiz(int nSpeakerTypeID, int nSpeakerTemplateID, int nResCode, String sTitle, String sProblemText, String sHintText, int nMinInput, int nMaxInput, int tRemainInitialQuiz, Charset charset) {
+        OutPacket p = OutPacket.create(SendOpcode.NPC_TALK, charset);
         p.writeByte(nSpeakerTypeID);
         p.writeInt(nSpeakerTemplateID);
         p.writeByte(0x6);

@@ -212,6 +212,30 @@ class PacketCreatorCharsetTest {
         assertEquals(0, packet.readByte());
     }
 
+    @Test
+    void npcTalkUsesTargetClientCharset() {
+        byte[] japaneseBytes = resolvePacket(PacketCreator.getNPCTalk(1012000, (byte) 0, "テスト", "00 00", (byte) 0), japaneseClient()).getBytes();
+        byte[] chineseBytes = resolvePacket(PacketCreator.getNPCTalk(1012000, (byte) 0, "中文", "00 00", (byte) 0), chineseClient()).getBytes();
+
+        byte[] expectedJapanese = "テスト".getBytes(JAPANESE_CHARSET);
+        byte[] expectedChinese = "中文".getBytes(Charset.forName("windows-936"));
+
+        assertArrayEquals(expectedJapanese, Arrays.copyOfRange(japaneseBytes, 11, 11 + expectedJapanese.length));
+        assertArrayEquals(expectedChinese, Arrays.copyOfRange(chineseBytes, 11, 11 + expectedChinese.length));
+    }
+
+    @Test
+    void generalChatUsesTargetClientCharset() {
+        byte[] japaneseBytes = resolvePacket(PacketCreator.getChatText(1001, "テスト", false, 0), japaneseClient()).getBytes();
+        byte[] chineseBytes = resolvePacket(PacketCreator.getChatText(1001, "中文", false, 0), chineseClient()).getBytes();
+
+        byte[] expectedJapanese = "テスト".getBytes(JAPANESE_CHARSET);
+        byte[] expectedChinese = "中文".getBytes(Charset.forName("windows-936"));
+
+        assertArrayEquals(expectedJapanese, Arrays.copyOfRange(japaneseBytes, 9, 9 + expectedJapanese.length));
+        assertArrayEquals(expectedChinese, Arrays.copyOfRange(chineseBytes, 9, 9 + expectedChinese.length));
+    }
+
     private static Client japaneseClient() {
         Client client = Client.createMock();
         client.setPacketCodePage(932);
