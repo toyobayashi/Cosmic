@@ -197,6 +197,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class Character extends AbstractCharacterObject {
     private static final Logger log = LoggerFactory.getLogger(Character.class);
     private static final String LEVEL_200 = "[Congrats] %s has reached Level %d! Congratulate %s on such an amazing achievement!";
+    private static final int LEVEL_UP_CLEAR_RANGE_X = 683;
+    private static final int LEVEL_UP_CLEAR_RANGE_Y = 512;
+    private static final long LEVEL_UP_CLEAR_DELAY = 1500;
     private static final String[] BLOCKED_NAMES = {"admin", "owner", "moderator", "intern", "donor", "administrator", "FREDRICK", "help", "helper", "alert", "notice", "maplestory", "fuck", "wizet", "fucking", "negro", "fuk", "fuc", "penis", "pussy", "asshole", "gay",
             "nigger", "homo", "suck", "cum", "shit", "shitty", "condom", "security", "official", "rape", "nigga", "sex", "tit", "boner", "orgy", "clit", "asshole", "fatass", "bitch", "support", "gamemaster", "cock", "gaay", "gm",
             "operate", "master", "sysop", "party", "GameMaster", "community", "message", "event", "test", "meso", "Scania", "yata", "AsiaSoft", "henesys"};
@@ -6298,6 +6301,45 @@ public class Character extends AbstractCharacterObject {
         return spGain;
     }
 
+    private void scheduleClearMonstersInLevelUpRange() {
+        MapleMap map = getMap();
+        if (map == null) {
+            return;
+        }
+
+        Point position = new Point(getPosition());
+        TimerManager.getInstance().schedule(() -> clearMonstersInLevelUpRange(map, position), LEVEL_UP_CLEAR_DELAY);
+    }
+
+    private void clearMonstersInLevelUpRange(MapleMap map, Point position) {
+        if (getMap() != map) {
+            return;
+        }
+
+        Rectangle range = new Rectangle(position.x - LEVEL_UP_CLEAR_RANGE_X, position.y - LEVEL_UP_CLEAR_RANGE_Y,
+                1366, 768);
+        List<MapObject> monsters = map.getMapObjectsInBox(range, Collections.singletonList(MapObjectType.MONSTER));
+
+        for (MapObject monsterObject : monsters) {
+            Monster monster = (Monster) monsterObject;
+            if (!monster.isAlive() || monster.getStats().isFriendly()) {
+                continue;
+            }
+            if (monster.isBoss()) {
+                map.broadcastMessage(PacketCreator.damageMonster(monster.getObjectId(), 0), monster.getPosition());
+                continue;
+            }
+            if (monster.getId() >= MobId.DEAD_HORNTAIL_MIN && monster.getId() <= MobId.HORNTAIL) {
+                continue;
+            }
+
+            int maxHp = monster.getMaxHp();
+            if (maxHp > 0) {
+                map.damageMonster(this, monster, maxHp);
+            }
+        }
+    }
+
     private void levelUpGainSp() {
         if (GameConstants.getJobBranch(job) == 0) {
             return;
@@ -6465,6 +6507,9 @@ public class Character extends AbstractCharacterObject {
         }
 
         getMap().broadcastMessage(this, PacketCreator.showForeignEffect(getId(), 0), false);
+        if (takeexp) {
+            scheduleClearMonstersInLevelUpRange();
+        }
         setMPC(new PartyCharacter(this));
         silentPartyUpdate();
 
