@@ -21,7 +21,7 @@
 */
 package provider;
 
-import provider.wz.BinaryWZFile;
+import provider.wz.OverlayWZFile;
 import provider.wz.WZFiles;
 import provider.wz.XMLWZFile;
 
@@ -42,7 +42,7 @@ public class DataProviderFactory {
 
     public static DataProvider getDataProvider(WZFiles in) {
         if (USE_BINARY) {
-            return new BinaryWZFile(in.getWzFilePath());
+            return new OverlayWZFile(in);
         }
         return getWZ(in.getFile());
     }

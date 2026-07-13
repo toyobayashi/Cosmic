@@ -8,7 +8,7 @@
       "mainClass": "api.CosmicApiApplication",
       "projectName": "Cosmic",
       "args": "local-config.yaml",
-      "vmArgs": "-Dwz-mode=binary -Dwz-path=MapleStory"
+      "vmArgs": "-Dwz-mode=binary -Dwz-path=MapleStory -Dwz-locale=zh-CN"
     },
     {
       "type": "java",

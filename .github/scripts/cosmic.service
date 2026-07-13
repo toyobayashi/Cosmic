@@ -8,7 +8,7 @@ After=mysql.service
 [Service]
 WorkingDirectory=/home/ubuntu/app/Cosmic
 
-ExecStart=/usr/bin/java -Xmx2048m -Dwz-path=wz -jar ./target/Cosmic.jar /etc/cosmic/config.yaml
+ExecStart=/usr/bin/java -Xmx2048m -Dwz-path=/home/ubuntu/app/MapleStory -Dwz-mode=binary -Dwz-locale=zh-CN -DremoteAssets.root=/home/ubuntu/app/private-assets -jar ./target/Cosmic.jar /etc/cosmic/config.yaml
 
 User=ubuntu
 

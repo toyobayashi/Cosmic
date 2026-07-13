@@ -8,8 +8,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center">
       <div className="text-center">
-        <h1 className="text-5xl font-bold text-gray-800 mb-4">Cosmic</h1>
-        <p className="text-lg text-gray-500 mb-8">Welcome to the Cosmic world</p>
+        <h1 className="text-5xl font-bold text-gray-800 mb-4">Yozora</h1>
+        <p className="text-lg text-gray-500 mb-8">Welcome to the Yozora</p>
         <Button
           type="primary"
           size="large"

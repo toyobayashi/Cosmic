@@ -18,10 +18,20 @@ public enum WZFiles {
     SOUND("Sound"),
     UI("UI");
 
+    private final String rootName;
     private final String fileName;
 
     WZFiles(String name) {
+        this.rootName = name;
         this.fileName = name + ".wz";
+    }
+
+    public String getRootName() {
+        return rootName;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
     public Path getFile() {

@@ -55,7 +55,7 @@ export default function AppLayout() {
     <Layout className="h-screen">
       <Sider trigger={null} collapsible collapsed={collapsed}>
         <div className="h-16 flex items-center justify-center font-bold text-lg" style={{ color: '#1677ff' }}>
-          {collapsed ? 'CM' : 'Cosmic Admin'}
+          {collapsed ? 'CM' : 'Admin'}
         </div>
         <Menu
           mode="inline"

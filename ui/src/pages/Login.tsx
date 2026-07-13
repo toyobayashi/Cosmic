@@ -30,7 +30,7 @@ export default function Login() {
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
-      <Card className="w-96 shadow-2xl" title="Cosmic Admin Login">
+      <Card className="w-96 shadow-2xl" title="Admin Login">
         <div className="text-center mb-4">
           <Button type="link" onClick={() => navigate('/register')}>
             No account? Register here
