@@ -6335,6 +6335,7 @@ public class Character extends AbstractCharacterObject {
 
             int maxHp = monster.getMaxHp();
             if (maxHp > 0) {
+                map.broadcastMessage(PacketCreator.damageMonster(monster.getObjectId(), maxHp), monster.getPosition());
                 map.damageMonster(this, monster, maxHp);
             }
         }
