@@ -26,6 +26,8 @@ import provider.wz.WZFiles;
 import provider.wz.XMLWZFile;
 
 import java.nio.file.Path;
+import java.util.EnumMap;
+import java.util.Map;
 
 public class DataProviderFactory {
 
@@ -35,6 +37,7 @@ public class DataProviderFactory {
      */
     private static final boolean USE_BINARY =
             "binary".equalsIgnoreCase(System.getProperty("wz-mode"));
+    private static final Map<WZFiles, DataProvider> BINARY_PROVIDER_CACHE = new EnumMap<>(WZFiles.class);
 
     private static DataProvider getWZ(Path in) {
         return new XMLWZFile(in);
@@ -42,7 +45,9 @@ public class DataProviderFactory {
 
     public static DataProvider getDataProvider(WZFiles in) {
         if (USE_BINARY) {
-            return new OverlayWZFile(in);
+            synchronized (BINARY_PROVIDER_CACHE) {
+                return BINARY_PROVIDER_CACHE.computeIfAbsent(in, OverlayWZFile::new);
+            }
         }
         return getWZ(in.getFile());
     }

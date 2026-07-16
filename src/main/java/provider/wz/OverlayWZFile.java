@@ -22,24 +22,22 @@ import java.util.Map;
 public class OverlayWZFile implements DataProvider {
     private static final Logger log = LoggerFactory.getLogger(OverlayWZFile.class);
 
-    private final WZFiles wzFile;
     private final DataProvider original;
     private final DataProvider custom;
     private final DataProvider locale;
 
     public OverlayWZFile(WZFiles wzFile) {
-        this.wzFile = wzFile;
         this.original = new BinaryWZFile(wzFile.getWzFilePath());
-        this.custom = createCustomProvider();
+        this.custom = createCustomProvider(wzFile);
         this.locale = createLocaleProvider(wzFile);
     }
 
-    private static DataProvider createCustomProvider() {
-        Path customPath = Path.of(WZFiles.getDirectory(), "Custom.wz");
+    private static DataProvider createCustomProvider(WZFiles wzFile) {
+        Path customPath = Path.of(WZFiles.getDirectory(), "Data", wzFile.getFileName());
         if (!Files.isRegularFile(customPath)) {
             return null;
         }
-        log.info("Using WZ custom overlay: {}", customPath);
+        log.info("Using WZ custom overlay for {}: {}", wzFile.getRootName(), customPath);
         return new BinaryWZFile(customPath.toString());
     }
 
@@ -65,7 +63,7 @@ public class OverlayWZFile implements DataProvider {
     @Override
     public Data getData(String path) {
         Data originalData = original.getData(path);
-        Data customData = custom == null ? null : custom.getData(customPath(path));
+        Data customData = custom == null ? null : custom.getData(path);
         Data localeData = locale == null ? null : locale.getData(path);
 
         if (originalData == null && customData == null) {
@@ -77,10 +75,6 @@ public class OverlayWZFile implements DataProvider {
     @Override
     public DataDirectoryEntry getRoot() {
         return original.getRoot();
-    }
-
-    private String customPath(String path) {
-        return wzFile.getRootName() + "/" + path;
     }
 
     private static final class OverlayData implements Data {
