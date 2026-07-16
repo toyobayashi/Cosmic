@@ -134,6 +134,7 @@ import java.util.stream.Collectors;
 public class PacketCreator {
     public static final int CLIENT_EXP_TABLE_MAGIC = 0x45585054;
     public static final int CLIENT_REMOTE_ASSET_SESSION_MAGIC = 0x52415353;
+    public static final int CLIENT_EXTREME_GREEN_POTION_MAGIC = 0x45584752;
 
 
     public static final List<Pair<Stat, Integer>> EMPTY_STATUPDATE = Collections.emptyList();
@@ -1014,6 +1015,15 @@ public class PacketCreator {
         p.writeString(session.assetBaseUrl());
         p.writeString(session.session());
         p.writeLong(session.expiresAtMillis());
+        return p;
+    }
+
+    public static Packet clientExtremeGreenPotion(boolean active, int durationMs) {
+        final OutPacket p = OutPacket.create(SendOpcode.CLIENT_EXT);
+        p.writeInt(CLIENT_EXTREME_GREEN_POTION_MAGIC);
+        p.writeByte(1);
+        p.writeByte(active ? 1 : 0);
+        p.writeInt(durationMs);
         return p;
     }
 
@@ -4050,6 +4060,15 @@ public class PacketCreator {
                 p.writeByte(0);
                 break;
         }
+        return p;
+    }
+
+    public static Packet giveExtremeGreenPotionBuff(int bufflength) {
+        final OutPacket p = OutPacket.create(SendOpcode.GIVE_BUFF);
+        writeLongMask(p, Collections.singletonList(new Pair<>(BuffStat.EXTREME_GREEN_POTION, 0)));
+        p.writeInt(0);
+        p.writeByte(0);
+        p.writeInt(-1);
         return p;
     }
 

@@ -54,6 +54,7 @@ public class Shop {
     private final List<ShopItem> items;
     private final int tokenvalue = 1000000000;
     private final int token = ItemId.GOLDEN_MAPLE_LEAF;
+    private static final int MONSTER_PARK_MERCHANT = 9071001;
 
     static {
         for (int throwingStarId : ItemId.allThrowingStarIds()) {
@@ -94,7 +95,22 @@ public class Shop {
             return;
         }
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        if (item.getPrice() > 0) {
+        if (getMonsterParkCoinCost(itemId) > 0) {
+            int amount = (int) Math.min((float) getMonsterParkCoinCost(itemId) * quantity, Integer.MAX_VALUE);
+
+            if (c.getPlayer().getInventory(InventoryType.ETC).countById(ItemId.MONSTER_PARK_COIN) >= amount) {
+                if (InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
+                    InventoryManipulator.addById(c, itemId, quantity, "", -1);
+                    InventoryManipulator.removeById(c, InventoryType.ETC, ItemId.MONSTER_PARK_COIN, amount, false, false);
+                    c.sendPacket(PacketCreator.shopTransaction((byte) 0));
+                } else {
+                    c.sendPacket(PacketCreator.shopTransaction((byte) 3));
+                }
+            } else {
+                c.sendPacket(PacketCreator.shopTransaction((byte) 0x0D));
+            }
+
+        } else if (item.getPrice() > 0) {
             int amount = (int) Math.min((float) item.getPrice() * quantity, Integer.MAX_VALUE);
             if (c.getPlayer().getMeso() >= amount) {
                 if (InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
@@ -118,22 +134,25 @@ public class Shop {
 
         } else if (item.getPitch() > 0) {
             int amount = (int) Math.min((float) item.getPitch() * quantity, Integer.MAX_VALUE);
+            int pitchToken = getPitchToken();
 
-            if (c.getPlayer().getInventory(InventoryType.ETC).countById(ItemId.PERFECT_PITCH) >= amount) {
+            if (c.getPlayer().getInventory(InventoryType.ETC).countById(pitchToken) >= amount) {
                 if (InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
                     if (!ItemConstants.isRechargeable(itemId)) {
                         InventoryManipulator.addById(c, itemId, quantity, "", -1);
-                        InventoryManipulator.removeById(c, InventoryType.ETC, ItemId.PERFECT_PITCH, amount, false, false);
+                        InventoryManipulator.removeById(c, InventoryType.ETC, pitchToken, amount, false, false);
                     } else {
                         short slotMax = ii.getSlotMax(c, item.getItemId());
                         quantity = slotMax;
                         InventoryManipulator.addById(c, itemId, quantity, "", -1);
-                        InventoryManipulator.removeById(c, InventoryType.ETC, ItemId.PERFECT_PITCH, amount, false, false);
+                        InventoryManipulator.removeById(c, InventoryType.ETC, pitchToken, amount, false, false);
                     }
                     c.sendPacket(PacketCreator.shopTransaction((byte) 0));
                 } else {
                     c.sendPacket(PacketCreator.shopTransaction((byte) 3));
                 }
+            } else {
+                c.sendPacket(PacketCreator.shopTransaction((byte) 0x0D));
             }
 
         } else if (c.getPlayer().getInventory(InventoryType.CASH).countById(token) != 0) {
@@ -281,8 +300,10 @@ public class Shop {
                             ret.addItem(new ShopItem((short) 1000, rs.getInt("itemid"), rs.getInt("price"), rs.getInt("pitch")));
                         }
                     }
-                    for (Integer recharge : recharges) {
-                        ret.addItem(new ShopItem((short) 1000, recharge, 0, 0));
+                    if (ret.getNpcId() != MONSTER_PARK_MERCHANT) {
+                        for (Integer recharge : recharges) {
+                            ret.addItem(new ShopItem((short) 1000, recharge, 0, 0));
+                        }
                     }
                 }
             }
@@ -298,5 +319,20 @@ public class Shop {
 
     public int getId() {
         return id;
+    }
+
+    private int getPitchToken() {
+        return npcId == MONSTER_PARK_MERCHANT ? ItemId.MONSTER_PARK_COIN : ItemId.PERFECT_PITCH;
+    }
+
+    private int getMonsterParkCoinCost(int itemId) {
+        if (npcId != MONSTER_PARK_MERCHANT) {
+            return 0;
+        }
+        return switch (itemId) {
+            case ItemId.EXTREME_RED_POTION, ItemId.EXTREME_GREEN_POTION, ItemId.EXTREME_BLUE_POTION -> 5;
+            case ItemId.EXTREME_GOLD_POTION -> 10;
+            default -> 0;
+        };
     }
 }

@@ -14,14 +14,19 @@ public class ItemId {
     public static final int RPS_CERTIFICATE_BASE = 4031332;
     public static final int GOLDEN_MAPLE_LEAF = 4000313;
     public static final int PERFECT_PITCH = 4310000;
+    public static final int MONSTER_PARK_COIN = 4310020;
     public static final int MAGIC_ROCK = 4006000;
     public static final int GOLDEN_CHICKEN_EFFECT = 4290000;
     public static final int BUMMER_EFFECT = 4290001;
     public static final int ARPQ_SHIELD = 2022269;
     public static final int ROARING_TIGER_MESSENGER = 5390006;
+    public static final int EXTREME_RED_POTION = 2023125;
+    public static final int EXTREME_GREEN_POTION = 2023126;
+    public static final int EXTREME_BLUE_POTION = 2023127;
+    public static final int EXTREME_GOLD_POTION = 2023128;
 
     public static boolean isExpIncrease(int itemId) {
-        return itemId >= 2022450 && itemId <= 2022452;
+        return (itemId >= 2022450 && itemId <= 2022452) || itemId == EXTREME_GOLD_POTION;
     }
 
     public static boolean isRateCoupon(int itemId) {

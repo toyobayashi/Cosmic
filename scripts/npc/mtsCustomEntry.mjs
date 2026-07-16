@@ -23,6 +23,8 @@ const SponsorService = Java.type("api.service.SponsorService");
 const CreateSponsorOrderDTO = Java.type("api.model.dto.CreateSponsorOrderDTO");
 const ClientHelloHandler = Java.type("net.server.handlers.ClientHelloHandler");
 const MAX_SPONSOR_AMOUNT_YUAN = 200;
+const MONSTER_PARK_ENTRANCE = 951000000;
+const MONSTER_PARK_RETURN_LOCATION = "MONSTER_PARK";
 
 let status = -1;
 let selectedMenu = -1;
@@ -167,7 +169,13 @@ function handleQuickMoveSelection(cm, selection) {
         return;
     }
 
-    cm.warp(quickMoveMaps[selection]);
+    const target = quickMoveMaps[selection];
+    const targetMapId = typeof target === "number" ? target : target.mapId;
+    if (targetMapId === MONSTER_PARK_ENTRANCE) {
+        cm.getPlayer().saveLocation(MONSTER_PARK_RETURN_LOCATION);
+    }
+
+    cm.warp(targetMapId);
     cm.dispose();
 }
 

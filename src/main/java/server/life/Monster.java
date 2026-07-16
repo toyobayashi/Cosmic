@@ -31,6 +31,7 @@ import client.SkillFactory;
 import client.status.MonsterStatus;
 import client.status.MonsterStatusEffect;
 import config.YamlConfig;
+import constants.id.ItemId;
 import constants.id.MobId;
 import constants.skills.Crusader;
 import constants.skills.FPMage;
@@ -736,7 +737,11 @@ public class Monster extends AbstractLoadedLife {
 
             Integer expBonus = attacker.getBuffedValue(BuffStat.EXP_INCREASE);
             if (expBonus != null) {     // exp increase player buff found thanks to HighKey21
-                personalExp += expBonus;
+                if (attacker.getBuffSource(BuffStat.EXP_INCREASE) == ItemId.EXTREME_GOLD_POTION) {
+                    personalExp *= (100.0f + expBonus) / 100.0f;
+                } else {
+                    personalExp += expBonus;
+                }
             }
 
             int _personalExp = expValueToInteger(personalExp); // assuming no negative xp here

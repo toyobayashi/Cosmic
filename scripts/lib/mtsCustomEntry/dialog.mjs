@@ -90,7 +90,9 @@ export function buildQuickMoveSelection(i18n, mapIds) {
     let text = i18n.t(messages.quickMove.question) + "#b";
 
     for (let i = 0; i < mapIds.length; i++) {
-        text += "\r\n" + option(i, "#m" + mapIds[i] + "#");
+        const map = mapIds[i];
+        const label = typeof map === "number" ? "#m" + map + "#" : map.label;
+        text += "\r\n" + option(i, label);
     }
 
     return text;

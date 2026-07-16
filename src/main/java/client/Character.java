@@ -86,6 +86,7 @@ import net.server.guild.Alliance;
 import net.server.guild.Guild;
 import net.server.guild.GuildCharacter;
 import net.server.guild.GuildPackets;
+import net.server.handlers.ClientHelloHandler;
 import net.server.services.task.world.CharacterSaveService;
 import net.server.services.type.WorldServices;
 import net.server.world.Messenger;
@@ -232,6 +233,7 @@ public class Character extends AbstractCharacterObject {
     private long lastfametime, lastUsedCashItem, lastExpression = 0, lastHealed, lastDeathtime, jailExpiration = -1;
     private transient int localstr, localdex, localluk, localint_, localmagic, localwatk;
     private transient int equipmaxhp, equipmaxmp, equipstr, equipdex, equipluk, equipint_, equipmagic, equipwatk, localchairhp, localchairmp;
+    private transient boolean extremePotionMaxHpMpChanged;
     private int localchairrate;
     private boolean hidden, equipchanged = true, berserk, hasMerchant, hasSandboxItem = false, whiteChat = false, canRecvPartySearchInvite = true;
     private boolean equippedMesoMagnet = false, equippedItemPouch = false, equippedPetItemIgnore = false;
@@ -1253,8 +1255,8 @@ public class Character extends AbstractCharacterObject {
             List<Pair<Stat, Integer>> statup = new ArrayList<>(7);
             statup.add(new Pair<>(Stat.HP, hp));
             statup.add(new Pair<>(Stat.MP, mp));
-            statup.add(new Pair<>(Stat.MAXHP, clientmaxhp));
-            statup.add(new Pair<>(Stat.MAXMP, clientmaxmp));
+            statup.add(new Pair<>(Stat.MAXHP, getVisibleMaxHp()));
+            statup.add(new Pair<>(Stat.MAXMP, getVisibleMaxMp()));
             statup.add(new Pair<>(Stat.AVAILABLEAP, remainingAp));
             statup.add(new Pair<>(Stat.AVAILABLESP, remainingSp[GameConstants.getSkillBook(job.getId())]));
             statup.add(new Pair<>(Stat.JOB, job.getId()));
@@ -3965,9 +3967,11 @@ public class Character extends AbstractCharacterObject {
 
     private boolean cancelEffect(StatEffect effect, boolean overwrite, long startTime, boolean firstCancel) {
         Set<BuffStat> removedStats = new LinkedHashSet<>();
+        markExtremePotionMaxHpMpChanged(effect);
         dropBuffStats(cancelEffectInternal(effect, overwrite, startTime, removedStats));
         updateLocalStats();
         updateEffects(removedStats);
+        sendExtremeGreenPotionStateIfNeeded(effect, false, 0);
 
         return !removedStats.isEmpty();
     }
@@ -4590,6 +4594,7 @@ public class Character extends AbstractCharacterObject {
         chrLock.lock();
         try {
             Integer sourceid = effect.getBuffSourceId();
+            markExtremePotionMaxHpMpChanged(effect);
             Map<BuffStat, BuffStatValueHolder> toDeploy;
             Map<BuffStat, BuffStatValueHolder> appliedStatups = new LinkedHashMap<>();
 
@@ -4664,6 +4669,7 @@ public class Character extends AbstractCharacterObject {
         }
 
         updateLocalStats();
+        sendExtremeGreenPotionStateIfNeeded(effect, true, (int) Math.min(Integer.MAX_VALUE, Math.max(0, expirationtime - starttime)));
     }
 
     private static int getJobMapChair(Job job) {
@@ -6496,8 +6502,8 @@ public class Character extends AbstractCharacterObject {
             statup.add(new Pair<>(Stat.MP, mp));
             statup.add(new Pair<>(Stat.EXP, exp.get()));
             statup.add(new Pair<>(Stat.LEVEL, level));
-            statup.add(new Pair<>(Stat.MAXHP, clientmaxhp));
-            statup.add(new Pair<>(Stat.MAXMP, clientmaxmp));
+            statup.add(new Pair<>(Stat.MAXHP, getVisibleMaxHp()));
+            statup.add(new Pair<>(Stat.MAXMP, getVisibleMaxMp()));
             statup.add(new Pair<>(Stat.STR, str));
             statup.add(new Pair<>(Stat.DEX, dex));
 
@@ -7718,6 +7724,54 @@ public class Character extends AbstractCharacterObject {
         localwatk += equipwatk;
     }
 
+    private void recalcExtremePotionMaxHpMp() {
+        Map<Integer, StatEffect> activeEffects = new LinkedHashMap<>();
+        for (Map<BuffStat, BuffStatValueHolder> statups : buffEffects.values()) {
+            for (BuffStatValueHolder statup : statups.values()) {
+                StatEffect effect = statup.effect;
+                activeEffects.putIfAbsent(effect.getBuffSourceId(), effect);
+            }
+        }
+
+        for (StatEffect effect : activeEffects.values()) {
+            localmaxhp += effect.getMaxHpBonus();
+            localmaxmp += effect.getMaxMpBonus();
+        }
+    }
+
+    private boolean hasExtremePotionMaxHpMpBonus() {
+        for (Map<BuffStat, BuffStatValueHolder> statups : buffEffects.values()) {
+            for (BuffStatValueHolder statup : statups.values()) {
+                StatEffect effect = statup.effect;
+                if (effect.getMaxHpBonus() != 0 || effect.getMaxMpBonus() != 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void markExtremePotionMaxHpMpChanged(StatEffect effect) {
+        if (effect.getMaxHpBonus() != 0 || effect.getMaxMpBonus() != 0) {
+            extremePotionMaxHpMpChanged = true;
+        }
+    }
+
+    private int getVisibleMaxHp() {
+        return hasExtremePotionMaxHpMpBonus() ? Math.min(30000, localmaxhp) : clientmaxhp;
+    }
+
+    private int getVisibleMaxMp() {
+        return hasExtremePotionMaxHpMpBonus() ? Math.min(30000, localmaxmp) : clientmaxmp;
+    }
+
+    private void sendExtremeGreenPotionStateIfNeeded(StatEffect effect, boolean active, int durationMs) {
+        if (effect.getSourceId() == ItemId.EXTREME_GREEN_POTION && client.hasClientCapability(ClientHelloHandler.CAPABILITY_EXTREME_GREEN_POTION)) {
+            sendPacket(PacketCreator.clientExtremeGreenPotion(active, Math.max(0, durationMs)));
+        }
+    }
+
     private void reapplyLocalStats() {
         effLock.lock();
         chrLock.lock();
@@ -7734,6 +7788,7 @@ public class Character extends AbstractCharacterObject {
             localchairrate = -1;
 
             recalcEquipStats();
+            recalcExtremePotionMaxHpMp();
 
             localmagic = Math.min(localmagic, 2000);
 
@@ -7851,6 +7906,9 @@ public class Character extends AbstractCharacterObject {
             List<Pair<Stat, Integer>> hpmpupdate = new ArrayList<>(2);
             int oldlocalmaxhp = localmaxhp;
             int oldlocalmaxmp = localmaxmp;
+            boolean forceExtremePotionMaxHpMpUpdate = extremePotionMaxHpMpChanged;
+            extremePotionMaxHpMpChanged = false;
+            boolean hadExtremePotionMaxHpMpBonus = hasExtremePotionMaxHpMpBonus();
 
             reapplyLocalStats();
 
@@ -7877,6 +7935,13 @@ public class Character extends AbstractCharacterObject {
                     }
 
                     hpmpupdate.add(mpUpdate);
+                }
+            } else if (forceExtremePotionMaxHpMpUpdate || hadExtremePotionMaxHpMpBonus || hasExtremePotionMaxHpMpBonus()) {
+                if (localmaxhp != oldlocalmaxhp) {
+                    hpmpupdate.add(new Pair<>(Stat.MAXHP, Math.min(30000, localmaxhp)));
+                }
+                if (localmaxmp != oldlocalmaxmp) {
+                    hpmpupdate.add(new Pair<>(Stat.MAXMP, Math.min(30000, localmaxmp)));
                 }
             }
 

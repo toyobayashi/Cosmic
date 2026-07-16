@@ -15,6 +15,7 @@ public final class ClientHelloHandler implements PacketHandler {
     public static final int VERSION = 2;
     public static final int CAPABILITY_EXP_TABLE = 0x1;
     public static final int CAPABILITY_REMOTE_ASSETS = 0x2;
+    public static final int CAPABILITY_EXTREME_GREEN_POTION = 0x4;
 
     @Override
     public boolean validateState(Client c) {

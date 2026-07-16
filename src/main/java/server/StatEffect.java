@@ -138,6 +138,7 @@ public class StatEffect {
     private int sourceid;
     private int moveTo;
     private int cp, nuffSkill;
+    private int maxHpBonus, maxMpBonus;
     private List<Disease> cureDebuffs;
     private boolean skill;
     private List<Pair<BuffStat, Integer>> statups;
@@ -459,6 +460,14 @@ public class StatEffect {
             addBuffStatPairToListIfNotZero(statups, BuffStat.AVOID, (int) ret.avoid);
             addBuffStatPairToListIfNotZero(statups, BuffStat.SPEED, (int) ret.speed);
             addBuffStatPairToListIfNotZero(statups, BuffStat.JUMP, (int) ret.jump);
+            if (sourceid == ItemId.EXTREME_RED_POTION) {
+                ret.maxHpBonus = DataTool.getInt("mhp", source, 0);
+            } else if (sourceid == ItemId.EXTREME_GREEN_POTION) {
+                ret.booster = DataTool.getInt("booster", source, -1);
+                statups.add(new Pair<>(BuffStat.EXTREME_GREEN_POTION, ret.booster));
+            } else if (sourceid == ItemId.EXTREME_BLUE_POTION) {
+                ret.maxMpBonus = DataTool.getInt("mmp", source, 0);
+            }
         }
 
         Data ltd = source.getChildByPath("lt");
@@ -1323,6 +1332,12 @@ public class StatEffect {
             localDuration = alchemistModifyVal(applyfrom, localDuration, false);
             applyto.getMap().broadcastMessage(applyto, PacketCreator.showBuffEffect(applyto.getId(), sourceid, 1, (byte) 3), false);
         }
+        if (isExtremeGreenPotion()) {
+            long starttime = Server.getInstance().getCurrentTime();
+            applyto.registerEffect(this, starttime, starttime + localDuration, false);
+            applyto.sendPacket(PacketCreator.giveExtremeGreenPotionBuff(localDuration));
+            return;
+        }
         if (localstatups.size() > 0) {
             Packet buff = null;
             Packet mbuff = null;
@@ -1736,6 +1751,10 @@ public class StatEffect {
         return skill && (sourceid == Buccaneer.SPEED_INFUSION || sourceid == Corsair.SPEED_INFUSION || sourceid == ThunderBreaker.SPEED_INFUSION);
     }
 
+    private boolean isExtremeGreenPotion() {
+        return !skill && sourceid == ItemId.EXTREME_GREEN_POTION;
+    }
+
     private boolean isCygnusFA() {
         return skill && (sourceid == DawnWarrior.FINAL_ATTACK || sourceid == WindArcher.FINAL_ATTACK);
     }
@@ -1884,6 +1903,14 @@ public class StatEffect {
 
     public int getDuration() {
         return duration;
+    }
+
+    public int getMaxHpBonus() {
+        return maxHpBonus;
+    }
+
+    public int getMaxMpBonus() {
+        return maxMpBonus;
     }
 
     public List<Pair<BuffStat, Integer>> getStatups() {

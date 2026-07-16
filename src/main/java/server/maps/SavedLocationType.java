@@ -32,6 +32,7 @@ public enum SavedLocationType {
     BOSSPQ,
     HAPPYVILLE,
     MONSTER_CARNIVAL,
+    MONSTER_PARK,
     DEVELOPER;
 
     public static SavedLocationType fromString(String Str) {

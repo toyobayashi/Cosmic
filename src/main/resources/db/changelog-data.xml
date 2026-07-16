@@ -58,4 +58,12 @@
         <sqlFile path="db/migrations/163-utf8mb4.sql"/>
     </changeSet>
 
+    <changeSet id="164" author="Toyo Li">
+        <sqlFile path="db/migrations/164-monster-park-merchant.sql"/>
+    </changeSet>
+
+    <changeSet id="165" author="Toyo Li">
+        <sqlFile path="db/migrations/165-monster-park-savedlocation.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
