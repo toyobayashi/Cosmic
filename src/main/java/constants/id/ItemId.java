@@ -15,6 +15,7 @@ public class ItemId {
     public static final int GOLDEN_MAPLE_LEAF = 4000313;
     public static final int PERFECT_PITCH = 4310000;
     public static final int MONSTER_PARK_COIN = 4310020;
+    public static final int MONSTER_PARK_ADDITIONAL_ENTRY_TICKET = 5252030;
     public static final int MAGIC_ROCK = 4006000;
     public static final int GOLDEN_CHICKEN_EFFECT = 4290000;
     public static final int BUMMER_EFFECT = 4290001;

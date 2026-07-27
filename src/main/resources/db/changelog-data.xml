@@ -66,4 +66,8 @@
         <sqlFile path="db/migrations/165-monster-park-savedlocation.sql"/>
     </changeSet>
 
+    <changeSet id="166" author="Toyo Li">
+        <sqlFile path="db/migrations/166-monster-park-daily-entry.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

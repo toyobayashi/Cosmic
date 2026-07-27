@@ -41,6 +41,7 @@ import scripting.event.EventManager;
 import scripting.npc.NPCScriptManager;
 import server.ItemInformationProvider;
 import server.Marriage;
+import server.MonsterParkEntryService;
 import server.expeditions.Expedition;
 import server.expeditions.ExpeditionBossLog;
 import server.expeditions.ExpeditionType;
@@ -90,6 +91,40 @@ public class AbstractPlayerInteraction {
 
     public int getLevel() {
         return getPlayer().getLevel();
+    }
+
+    public int getMonsterParkEntryStatus() {
+        MonsterParkEntryService.EntryState state = MonsterParkEntryService.getEntryState(getPlayer().getId());
+        if (state == null) {
+            return -2;
+        }
+        return state.freeEntries() == 0 ? -1 : state.additionalEntries();
+    }
+
+    public int registerMonsterParkEntry() {
+        boolean hasTicket = haveItem(ItemId.MONSTER_PARK_ADDITIONAL_ENTRY_TICKET);
+        MonsterParkEntryService.EntryResult result =
+                MonsterParkEntryService.tryRegisterEntry(getPlayer().getId(), hasTicket);
+
+        if (result == MonsterParkEntryService.EntryResult.ADDITIONAL) {
+            InventoryManipulator.removeById(
+                    c,
+                    InventoryType.CASH,
+                    ItemId.MONSTER_PARK_ADDITIONAL_ENTRY_TICKET,
+                    1,
+                    true,
+                    false
+            );
+        }
+        return result.getCode();
+    }
+
+    public int getMonsterParkExtremeEntryStatus() {
+        return MonsterParkEntryService.getExtremeEntryStatus(getPlayer().getId());
+    }
+
+    public int registerMonsterParkExtremeEntry() {
+        return MonsterParkEntryService.tryRegisterExtremeEntry(getPlayer().getId());
     }
 
     public MapleMap getMap() {
