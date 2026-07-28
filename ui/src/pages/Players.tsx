@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Table, Button, Space, Tag, message, Modal, Form, Select, Card, InputNumber, Input, List, Spin } from 'antd'
 import { GiftOutlined, ReloadOutlined, GlobalOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import api from '../api/client'
+import GameIdInput from '../components/GameIdInput'
 
 interface OnlineChar {
   id: number; name: string; level: number; job: number; world: number; mapId: number; mapName: string;
@@ -204,8 +205,8 @@ export default function Players() {
             <Select options={giveTypes} value={giveType} onChange={setGiveType} placeholder="Select type" />
           </Form.Item>
           {giveType === 'item' && (
-            <Form.Item name="itemId" label="Item ID" rules={[{ required: true }]}>
-              <InputNumber className="w-full" />
+            <Form.Item name="itemId" label="Item" rules={[{ required: true }]}>
+              <GameIdInput searchType="Item" placeholder="Search item by name or ID" />
             </Form.Item>
           )}
           {giveType && !rateTypes.includes(giveType) && (
