@@ -55,8 +55,8 @@ export const messages = defineMessages({
             zhCN: "#b#L{tier}#{minLevel}-{maxLevel}级怪物公园#l"
         },
         freeEntryNotice: {
-            en: "#gToday's free entry will be used.#k",
-            zhCN: "#g本次将使用今天的免费入场次数。#k"
+            en: "#dToday's free entry will be used.#k",
+            zhCN: "#d本次将使用今天的免费入场次数。#k"
         },
         additionalEntryNotice: {
             en: "#rA Monster Park Additional Entry Ticket will be used. ({used}/6 additional entries used today)#k",

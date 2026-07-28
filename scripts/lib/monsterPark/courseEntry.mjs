@@ -13,7 +13,8 @@ const ENTRY_RESULT_DAILY_LIMIT = 3;
 export function createCourseEntryState() {
     return {
         status: -1,
-        courseSelectionShown: false
+        courseSelectionShown: false,
+        pendingReward: null
     };
 }
 
@@ -30,7 +31,9 @@ export function handleCourseEntryAction(ctx, mode, selection, state, courses) {
     if (state.status === 0) {
         showCourseSelection(cm, i18n, state, courses);
     } else if (state.status === 1 && state.courseSelectionShown) {
-        completeCourse(cm, i18n, selection, courses);
+        prepareCourseReward(cm, i18n, selection, state, courses);
+    } else if (state.status === 2 && state.pendingReward !== null) {
+        completeCourse(cm, i18n, state);
     } else {
         cm.dispose();
     }
@@ -77,7 +80,7 @@ function showCourseSelection(cm, i18n, state, courses) {
     }));
 }
 
-function completeCourse(cm, i18n, selection, courses) {
+function prepareCourseReward(cm, i18n, selection, state, courses) {
     const courseIndex = getCourseIndex(cm.getLevel(), courses);
     if (courseIndex < 0 || selection < 0 || selection > courseIndex) {
         cm.sendOk(i18n.t(messages.daily.invalidSelection));
@@ -87,6 +90,22 @@ function completeCourse(cm, i18n, selection, courses) {
     const course = courses[selection];
     const coins = randomInt(course.minCoins, course.maxCoins);
     if (!cm.canHold(MONSTER_PARK_COIN, coins)) {
+        cm.sendOk(i18n.t(messages.daily.inventoryFull));
+        return;
+    }
+
+    state.pendingReward = { course, coins };
+    cm.sendOk(i18n.t(messages.daily.reward, {
+        exp: course.exp,
+        coins
+    }));
+}
+
+function completeCourse(cm, i18n, state) {
+    const reward = state.pendingReward;
+    state.pendingReward = null;
+
+    if (!cm.canHold(MONSTER_PARK_COIN, reward.coins)) {
         cm.sendOk(i18n.t(messages.daily.inventoryFull));
         return;
     }
@@ -105,12 +124,10 @@ function completeCourse(cm, i18n, selection, courses) {
         return;
     }
 
-    cm.gainExp(course.exp);
-    cm.gainItem(MONSTER_PARK_COIN, coins);
-    cm.sendOk(i18n.t(messages.daily.reward, {
-        exp: course.exp,
-        coins
-    }));
+    const player = cm.getPlayer();
+    cm.gainItem(MONSTER_PARK_COIN, reward.coins);
+    cm.dispose();
+    player.gainExp(reward.course.exp, true, true);
 }
 
 function getCourseIndex(level, courses) {
