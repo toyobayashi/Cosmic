@@ -9,7 +9,6 @@ const ENTRY_ERROR = -1;
 
 let status = -1;
 let selectionShown = false;
-let rewardPending = false;
 
 export function start(ctx) {
     action(ctx, 1, 0, 0);
@@ -28,9 +27,7 @@ export function action(ctx, mode, type, selection) {
     if (status === 0) {
         showSelection(cm, i18n);
     } else if (status === 1 && selectionShown) {
-        prepareReward(cm, i18n, selection);
-    } else if (status === 2 && rewardPending) {
-        completeEntry(cm, i18n);
+        completeEntry(cm, i18n, selection);
     } else {
         cm.dispose();
     }
@@ -56,18 +53,11 @@ function showSelection(cm, i18n) {
     cm.sendSimple(i18n.t(messages.extremeWeekly.selection));
 }
 
-function prepareReward(cm, i18n, selection) {
+function completeEntry(cm, i18n, selection) {
     if (cm.getLevel() < MIN_LEVEL || selection !== 0) {
         cm.dispose();
         return;
     }
-
-    rewardPending = true;
-    cm.sendOk(i18n.t(messages.extremeWeekly.reward));
-}
-
-function completeEntry(cm, i18n) {
-    rewardPending = false;
 
     const entryResult = cm.registerMonsterParkExtremeEntry();
     if (entryResult === ENTRY_ALREADY_USED) {
@@ -79,7 +69,6 @@ function completeEntry(cm, i18n) {
         return;
     }
 
-    const player = cm.getPlayer();
-    cm.dispose();
-    player.gainExp(REWARD_EXP, true, true);
+    cm.gainExp(REWARD_EXP);
+    cm.sendOk(i18n.t(messages.extremeWeekly.reward));
 }
