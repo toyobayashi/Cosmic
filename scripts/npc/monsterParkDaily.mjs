@@ -2,9 +2,9 @@ import { createCourseEntryState, handleCourseEntryAction } from "../lib/monsterP
 
 const COURSES = Object.freeze([
     Object.freeze({ minLevel: 30, maxLevel: 39, exp: 4778, minCoins: 5, maxCoins: 10 }),
-    Object.freeze({ minLevel: 40, maxLevel: 49, exp: 12839, minCoins: 6, maxCoins: 12 }),
-    Object.freeze({ minLevel: 50, maxLevel: 59, exp: 27717, minCoins: 7, maxCoins: 14 }),
-    Object.freeze({ minLevel: 60, maxLevel: 69, exp: 44324, minCoins: 8, maxCoins: 16 })
+    Object.freeze({ minLevel: 40, maxLevel: 49, exp: 10271, minCoins: 6, maxCoins: 12 }),
+    Object.freeze({ minLevel: 50, maxLevel: 59, exp: 19956, minCoins: 7, maxCoins: 14 }),
+    Object.freeze({ minLevel: 60, maxLevel: 69, exp: 33243, minCoins: 8, maxCoins: 16 })
 ]);
 
 const state = createCourseEntryState();

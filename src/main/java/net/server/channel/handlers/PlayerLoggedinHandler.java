@@ -61,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.life.MobSkill;
+import server.quest.DailyHuntQuest;
 import service.NoteService;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
@@ -252,6 +253,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             }
 
             c.sendPacket(PacketCreator.getCharInfo(player));
+            DailyHuntQuest.refreshForCurrentDay(player);
             if (!player.isHidden()) {
                 if (player.isGM() && YamlConfig.config.server.USE_AUTOHIDE_GM) {
                     player.toggleHide(true);
@@ -270,6 +272,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
 
             player.getMap().addPlayer(player);
             player.visitMap(player.getMap());
+            DailyHuntQuest.showPendingCompletion(player);
 
             BuddyList bl = player.getBuddylist();
             int[] buddyIds = bl.getBuddyIds();

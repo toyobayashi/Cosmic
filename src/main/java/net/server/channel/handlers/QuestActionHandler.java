@@ -27,6 +27,7 @@ import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import scripting.quest.QuestScriptManager;
 import server.life.NPC;
+import server.quest.DailyHuntQuest;
 import server.quest.Quest;
 
 import java.awt.*;
@@ -72,6 +73,9 @@ public final class QuestActionHandler extends AbstractPacketHandler {
         short questid = p.readShort();
         Character player = c.getPlayer();
         Quest quest = Quest.getInstance(questid);
+        if (questid == DailyHuntQuest.QUEST_ID) {
+            DailyHuntQuest.refreshForCurrentDay(player);
+        }
 
         switch (action) {
         case 0: // Restore lost item, Credits Darter ( Rajan )

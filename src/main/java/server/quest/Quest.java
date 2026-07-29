@@ -412,7 +412,9 @@ public class Quest {
         QuestStatus newStatus = new QuestStatus(this, QuestStatus.Status.COMPLETED, npc);
         newStatus.setForfeited(chr.getQuest(this).getForfeited());
         newStatus.setCompleted(chr.getQuest(this).getCompleted());
-        newStatus.setCompletionTime(System.currentTimeMillis());
+        newStatus.setCompletionTime(id == DailyHuntQuest.QUEST_ID
+                ? DailyHuntQuest.getStartOfTodayMillis()
+                : System.currentTimeMillis());
         chr.updateQuestStatus(newStatus);
 
         chr.sendPacket(PacketCreator.showSpecialEffect(9)); // Quest completion

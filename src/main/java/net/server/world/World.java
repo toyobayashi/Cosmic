@@ -48,6 +48,7 @@ import net.server.services.ServicesManager;
 import net.server.services.type.WorldServices;
 import net.server.task.CharacterAutosaverTask;
 import net.server.task.CharacterHpDecreaseTask;
+import net.server.task.DailyHuntResetTask;
 import net.server.task.FamilyDailyResetTask;
 import net.server.task.FishingTask;
 import net.server.task.HiredMerchantTask;
@@ -71,6 +72,7 @@ import server.maps.MiniDungeon;
 import server.maps.MiniDungeonInfo;
 import server.maps.PlayerShop;
 import server.maps.PlayerShopItem;
+import server.quest.DailyHuntQuest;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
 import tools.Pair;
@@ -242,6 +244,7 @@ public class World {
         partySearchSchedule = tman.register(new PartySearchTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
         timeoutSchedule = tman.register(new TimeoutTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
         hpDecSchedule = tman.register(new CharacterHpDecreaseTask(this), YamlConfig.config.server.MAP_DAMAGE_OVERTIME_INTERVAL, YamlConfig.config.server.MAP_DAMAGE_OVERTIME_INTERVAL);
+        tman.register(new DailyHuntResetTask(this), DAYS.toMillis(1), DailyHuntQuest.getMillisUntilNextReset());
 
         if (YamlConfig.config.server.USE_FAMILY_SYSTEM) {
             long timeLeft = Server.getTimeLeftForNextDay();
