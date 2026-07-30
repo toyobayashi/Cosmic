@@ -28,7 +28,9 @@ import client.BuddylistEntry;
 import client.Character;
 import client.Family;
 import config.YamlConfig;
+import constants.game.ExpTable;
 import constants.game.GameConstants;
+import constants.id.MapId;
 import net.packet.Packet;
 import net.server.PlayerStorage;
 import net.server.Server;
@@ -51,6 +53,7 @@ import net.server.task.CharacterHpDecreaseTask;
 import net.server.task.DailyHuntResetTask;
 import net.server.task.FamilyDailyResetTask;
 import net.server.task.FishingTask;
+import net.server.task.FreeMarketAfkExpTask;
 import net.server.task.HiredMerchantTask;
 import net.server.task.MapOwnershipTask;
 import net.server.task.MountTirednessTask;
@@ -197,6 +200,7 @@ public class World {
     private ScheduledFuture<?> charactersSchedule;
     private ScheduledFuture<?> marriagesSchedule;
     private ScheduledFuture<?> mapOwnershipSchedule;
+    private ScheduledFuture<?> freeMarketAfkExpSchedule;
     private ScheduledFuture<?> fishingSchedule;
     private ScheduledFuture<?> partySearchSchedule;
     private ScheduledFuture<?> timeoutSchedule;
@@ -240,6 +244,7 @@ public class World {
         charactersSchedule = tman.register(new CharacterAutosaverTask(this), HOURS.toMillis(1), HOURS.toMillis(1));
         marriagesSchedule = tman.register(new WeddingReservationTask(this), MINUTES.toMillis(YamlConfig.config.server.WEDDING_RESERVATION_INTERVAL), MINUTES.toMillis(YamlConfig.config.server.WEDDING_RESERVATION_INTERVAL));
         mapOwnershipSchedule = tman.register(new MapOwnershipTask(this), SECONDS.toMillis(20), SECONDS.toMillis(20));
+        freeMarketAfkExpSchedule = tman.register(new FreeMarketAfkExpTask(this), SECONDS.toMillis(5), SECONDS.toMillis(5));
         fishingSchedule = tman.register(new FishingTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
         partySearchSchedule = tman.register(new PartySearchTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
         timeoutSchedule = tman.register(new TimeoutTask(this), SECONDS.toMillis(10), SECONDS.toMillis(10));
@@ -2105,6 +2110,24 @@ public class World {
         }
     }
 
+    public void runFreeMarketAfkExpSchedule() {
+        for (Character chr : getPlayerStorage().getAllCharacters()) {
+            if (!chr.isLoggedin()) {
+                continue;
+            }
+
+            int mapId = chr.getMapId();
+            if (mapId != MapId.FM_ENTRANCE && !GameConstants.isFreeMarketRoom(mapId)) {
+                continue;
+            }
+
+            int expGain = ExpTable.getFreeMarketAfkExpForLevel(chr.getLevel());
+            if (expGain > 0) {
+                chr.gainFixedExp(expGain, true, false, true);
+            }
+        }
+    }
+
     public void runCheckFishingSchedule() {
         double[] fishingLikelihoods = Fishing.fetchFishingLikelihood();
         double yearLikelihood = fishingLikelihoods[0], timeLikelihood = fishingLikelihoods[1];
@@ -2191,6 +2214,11 @@ public class World {
         if (mapOwnershipSchedule != null) {
             mapOwnershipSchedule.cancel(false);
             mapOwnershipSchedule = null;
+        }
+
+        if (freeMarketAfkExpSchedule != null) {
+            freeMarketAfkExpSchedule.cancel(false);
+            freeMarketAfkExpSchedule = null;
         }
 
         if (fishingSchedule != null) {

@@ -3125,6 +3125,14 @@ public class Character extends AbstractCharacterObject {
         gainExp(gain, 0, show, inChat, white);
     }
 
+    public void gainFixedExp(int gain, boolean show, boolean inChat, boolean white) {
+        if (gain < 0) {
+            gain = Integer.MAX_VALUE;
+        }
+
+        gainExpInternal(gain, 0, 0, show, inChat, white);
+    }
+
     public void gainExp(int gain, int party, boolean show, boolean inChat, boolean white) {
         if (hasDisease(Disease.CURSE)) {
             gain *= 0.5;
