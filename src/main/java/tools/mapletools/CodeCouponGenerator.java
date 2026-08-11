@@ -1,6 +1,7 @@
 package tools.mapletools;
 
 import tools.Pair;
+import tools.DatabaseConnection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -244,16 +245,30 @@ public class CodeCouponGenerator {
         System.out.println("  Generating coupon '" + recipe.name + "'");
         generatedKeys = null;
 
-        PreparedStatement ps = con.prepareStatement("INSERT IGNORE INTO `nxcode` (`code`, `expiration`) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+        PreparedStatement ps = con.prepareStatement(DatabaseConnection.getDialect().insertCouponSql(), Statement.RETURN_GENERATED_KEYS);
         ps.setLong(2, currentTime + HOURS.toMillis(recipe.duration));
 
-        for (int i = 0; i < recipe.quantity; i++) {
-            ps.setString(1, generateCouponCode());
-            ps.addBatch();
+        if (DatabaseConnection.isSqlite()) {
+            generatedKeys = new ArrayList<>();
+            for (int i = 0; i < recipe.quantity; i++) {
+                ps.setString(1, generateCouponCode());
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (!rs.next()) {
+                        throw new SQLException("SQLite did not return a generated coupon id");
+                    }
+                    generatedKeys.add(rs.getInt(1));
+                }
+            }
+        } else {
+            for (int i = 0; i < recipe.quantity; i++) {
+                ps.setString(1, generateCouponCode());
+                ps.addBatch();
+            }
+            ps.executeBatch();
         }
-        ps.executeBatch();
 
-        PreparedStatement ps2 = con.prepareStatement("INSERT IGNORE INTO `nxcode_items` (`codeid`, `type`, `item`, `quantity`) VALUES (?, ?, ?, ?)");
+        PreparedStatement ps2 = con.prepareStatement(DatabaseConnection.getDialect().insertCouponItemSql());
         if (!recipe.itemList.isEmpty()) {
             ps2.setInt(2, 5);
             List<Integer> keys = getGeneratedKeys(ps);
@@ -309,7 +324,7 @@ public class CodeCouponGenerator {
     }
 
     private static void loadUsedCouponCodes() throws SQLException {
-        PreparedStatement ps = con.prepareStatement("SELECT code FROM nxcode", Statement.RETURN_GENERATED_KEYS);
+        PreparedStatement ps = con.prepareStatement("SELECT code FROM nxcode");
         ResultSet rs = ps.executeQuery();
         while (rs.next()) {
             usedCodes.add(rs.getString("code"));

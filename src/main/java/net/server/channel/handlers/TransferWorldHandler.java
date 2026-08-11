@@ -65,7 +65,7 @@ public final class TransferWorldHandler extends AbstractPacketHandler {
             ps.setInt(1, chr.getId());
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Timestamp completedTimestamp = rs.getTimestamp("completionTime");
+                Timestamp completedTimestamp = DatabaseConnection.getTimestamp(rs, "completionTime");
                 if (completedTimestamp == null) { //has pending world transfer
                     c.sendPacket(PacketCreator.sendWorldTransferRules(6, c));
                     return;

@@ -8,12 +8,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 public final class MonsterParkEntryService {
     private static final Logger log = LoggerFactory.getLogger(MonsterParkEntryService.class);
     private static final int MAX_ADDITIONAL_ENTRIES = 6;
-    private static final String CURRENT_THURSDAY = "DATE_SUB(CURRENT_DATE, INTERVAL MOD(WEEKDAY(CURRENT_DATE) + 4, 7) DAY)";
-
     private MonsterParkEntryService() {
     }
 
@@ -43,9 +42,10 @@ public final class MonsterParkEntryService {
              PreparedStatement ps = con.prepareStatement("""
                      SELECT free_entries, additional_entries
                      FROM monster_park_entries
-                     WHERE characterid = ? AND entrydate = CURRENT_DATE
+                     WHERE characterid = ? AND entrydate = ?
                      """)) {
             ps.setInt(1, characterId);
+            ps.setString(2, currentDate().toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new EntryState(rs.getInt("free_entries"), rs.getInt("additional_entries"));
@@ -60,6 +60,7 @@ public final class MonsterParkEntryService {
 
     public static synchronized EntryResult tryRegisterEntry(int characterId, boolean hasAdditionalEntryTicket) {
         try (Connection con = DatabaseConnection.getConnection()) {
+            DatabaseConnection.getDialect().beginWriteTransaction(con);
             con.setAutoCommit(false);
             try {
                 EntryState state = selectEntryStateForUpdate(con, characterId);
@@ -96,11 +97,12 @@ public final class MonsterParkEntryService {
         String sql = """
                 SELECT 1
                 FROM monster_park_extreme_entries
-                WHERE characterid = ? AND week_start = %s
-                """.formatted(CURRENT_THURSDAY);
+                WHERE characterid = ? AND week_start = ?
+                """;
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, characterId);
+            ps.setString(2, currentThursday().toString());
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? 1 : 0;
             }
@@ -112,12 +114,12 @@ public final class MonsterParkEntryService {
 
     public static synchronized int tryRegisterExtremeEntry(int characterId) {
         String sql = """
-                INSERT IGNORE INTO monster_park_extreme_entries (characterid, week_start)
-                VALUES (?, %s)
-                """.formatted(CURRENT_THURSDAY);
+                %s
+                """.formatted(DatabaseConnection.getDialect().insertExtremeEntrySql());
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, characterId);
+            ps.setString(2, currentThursday().toString());
             return ps.executeUpdate() == 1 ? 0 : 1;
         } catch (SQLException e) {
             log.error("Failed to register Extreme Monster Park entry for character {}", characterId, e);
@@ -129,10 +131,10 @@ public final class MonsterParkEntryService {
         try (PreparedStatement ps = con.prepareStatement("""
                 SELECT free_entries, additional_entries
                 FROM monster_park_entries
-                WHERE characterid = ? AND entrydate = CURRENT_DATE
-                FOR UPDATE
-                """)) {
+                WHERE characterid = ? AND entrydate = ?
+                """ + DatabaseConnection.getDialect().forUpdateClause())) {
             ps.setInt(1, characterId);
+            ps.setString(2, currentDate().toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new EntryState(rs.getInt("free_entries"), rs.getInt("additional_entries"));
@@ -146,9 +148,10 @@ public final class MonsterParkEntryService {
         try (PreparedStatement ps = con.prepareStatement("""
                 INSERT INTO monster_park_entries
                     (characterid, entrydate, free_entries, additional_entries)
-                VALUES (?, CURRENT_DATE, 1, 0)
+                VALUES (?, ?, 1, 0)
                 """)) {
             ps.setInt(1, characterId);
+            ps.setString(2, currentDate().toString());
             ps.executeUpdate();
         }
     }
@@ -161,13 +164,23 @@ public final class MonsterParkEntryService {
     ) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement("""
                 UPDATE monster_park_entries
-                SET free_entries = ?, additional_entries = ?
-                WHERE characterid = ? AND entrydate = CURRENT_DATE
+                SET free_entries = ?, additional_entries = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE characterid = ? AND entrydate = ?
                 """)) {
             ps.setInt(1, freeEntries);
             ps.setInt(2, additionalEntries);
             ps.setInt(3, characterId);
+            ps.setString(4, currentDate().toString());
             ps.executeUpdate();
         }
+    }
+
+    private static LocalDate currentDate() {
+        return LocalDate.now();
+    }
+
+    private static LocalDate currentThursday() {
+        LocalDate today = currentDate();
+        return today.minusDays((today.getDayOfWeek().getValue() + 3L) % 7L);
     }
 }

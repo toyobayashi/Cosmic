@@ -4,13 +4,14 @@ import api.model.dto.AccountInfoDTO;
 import api.model.dto.AddAccountDTO;
 import api.model.dto.UpdateAccountByUserDTO;
 import api.model.dto.UpdateAccountByGmDTO;
+import client.DefaultDates;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 
 import java.security.NoSuchAlgorithmException;
-import java.sql.Timestamp;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -147,20 +148,23 @@ public class AccountService {
         if (getAccountByName(dto.getName()) != null) {
             throw new IllegalArgumentException("Account name already exists");
         }
-        try (Handle handle = DatabaseConnection.getHandle()) {
+        try (var connection = DatabaseConnection.getConnection();
+             var statement = connection.prepareStatement(
+                     "INSERT INTO accounts (name, password, email, birthday, tempban, gender, tos) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, 0)")) {
             String hashedPwd = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt(12));
             String birthday = dto.getBirthday() != null ? dto.getBirthday() : "2005-05-11";
             int gender = dto.getGender() != null ? dto.getGender() : 10;
 
-            handle.createUpdate(
-                    "INSERT INTO accounts (name, password, email, birthday, gender, tos) " +
-                    "VALUES (?, ?, ?, ?, ?, 0)")
-                    .bind(0, dto.getName())
-                    .bind(1, hashedPwd)
-                    .bind(2, dto.getEmail())
-                    .bind(3, birthday)
-                    .bind(4, gender)
-                    .execute();
+            statement.setString(1, dto.getName());
+            statement.setString(2, hashedPwd);
+            statement.setString(3, dto.getEmail());
+            statement.setString(4, birthday);
+            DatabaseConnection.setLocalDateTime(statement, 5, DefaultDates.getTempban());
+            statement.setInt(6, gender);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to create account", e);
         }
     }
 

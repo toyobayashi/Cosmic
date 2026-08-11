@@ -19,6 +19,12 @@ import java.util.List;
 import java.util.function.Function;
 
 public class GuildPackets {
+    public record BbsThreadRow(int localThreadId, int posterCid, String name, long timestamp, int icon, int replyCount) {
+    }
+
+    public record GuildRankRow(String name, int gp, int logoBg, int logoBgColor, int logo, int logoColor) {
+    }
+
     private static Packet perClientPacket(Function<Client, Packet> factory) {
         return new PerClientPacket(factory, () -> factory.apply(Client.createMock()));
     }
@@ -277,6 +283,41 @@ public class GuildPackets {
         return BBSThreadList(p, rs, start);
     }
 
+    public static Packet BBSThreadList(Client c, List<BbsThreadRow> rows, int start) {
+        OutPacket p = OutPacket.create(SendOpcode.GUILD_BBS_PACKET, c.getPacketCharset());
+        return BBSThreadList(p, rows, start);
+    }
+
+    private static Packet BBSThreadList(OutPacket p, List<BbsThreadRow> rows, int start) {
+        p.writeByte(0x06);
+        boolean hasNotice = !rows.isEmpty() && rows.get(rows.size() - 1).localThreadId() == 0;
+        if (hasNotice) {
+            p.writeByte(1);
+            addThread(p, rows.get(rows.size() - 1));
+        } else {
+            p.writeByte(0);
+        }
+
+        int visibleCount = hasNotice ? rows.size() - 1 : rows.size();
+        int safeStart = start >= visibleCount ? 0 : Math.max(0, start);
+        int pageSize = Math.min(10, Math.max(0, visibleCount - safeStart));
+        p.writeInt(visibleCount);
+        p.writeInt(pageSize);
+        for (int i = 0; i < pageSize; i++) {
+            addThread(p, rows.get(safeStart + i));
+        }
+        return p;
+    }
+
+    private static void addThread(OutPacket p, BbsThreadRow row) {
+        p.writeInt(row.localThreadId());
+        p.writeInt(row.posterCid());
+        p.writeString(row.name());
+        p.writeLong(PacketCreator.getTime(row.timestamp()));
+        p.writeInt(row.icon());
+        p.writeInt(row.replyCount());
+    }
+
     private static Packet BBSThreadList(OutPacket p, ResultSet rs, int start) throws SQLException {
         p.writeByte(0x06);
         if (!rs.last()) {
@@ -351,6 +392,26 @@ public class GuildPackets {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    public static Packet showGuildRanks(Client c, int npcid, List<GuildRankRow> rows) {
+        return perClientPacket(client -> showGuildRanksList(client, npcid, rows));
+    }
+
+    private static Packet showGuildRanksList(Client c, int npcid, List<GuildRankRow> rows) {
+        OutPacket p = OutPacket.create(SendOpcode.GUILD_OPERATION, c.getPacketCharset());
+        p.writeByte(0x49);
+        p.writeInt(npcid);
+        p.writeInt(rows.size());
+        for (GuildRankRow row : rows) {
+            p.writeString(row.name());
+            p.writeInt(row.gp());
+            p.writeInt(row.logo());
+            p.writeInt(row.logoColor());
+            p.writeInt(row.logoBg());
+            p.writeInt(row.logoBgColor());
+        }
+        return p;
     }
 
     private static Packet showGuildRanks(Client c, int npcid, ResultSet rs) throws SQLException {

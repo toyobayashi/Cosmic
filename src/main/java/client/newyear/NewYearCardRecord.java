@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
@@ -134,7 +135,7 @@ public class NewYearCardRecord {
 
     public static void saveNewYearCard(NewYearCardRecord newyear) {
         try (Connection con = DatabaseConnection.getConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO newyear VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO newyear (senderid, sendername, receiverid, receivername, message, senderdiscard, receiverdiscard, received, timesent, timereceived) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, newyear.senderId);
                 ps.setString(2, newyear.senderName);
                 ps.setInt(3, newyear.receiverId);

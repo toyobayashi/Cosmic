@@ -17,9 +17,10 @@ public class SessionDAO {
     private static final Logger log = LoggerFactory.getLogger(SessionDAO.class);
 
     public static void deleteExpiredHwidAccounts() {
-        final String query = "DELETE FROM hwidaccounts WHERE expiresat < CURRENT_TIMESTAMP";
+        final String query = "DELETE FROM hwidaccounts WHERE expiresat < ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(query)) {
+            DatabaseConnection.setTimestamp(ps, 1, Timestamp.from(Instant.now()));
             ps.executeUpdate();
         } catch (SQLException e) {
             log.warn("Failed to delete expired hwidaccounts", e);
@@ -53,7 +54,7 @@ public class SessionDAO {
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setInt(1, accountId);
             ps.setString(2, hwid.hwid());
-            ps.setTimestamp(3, Timestamp.from(expiry));
+            DatabaseConnection.setTimestamp(ps, 3, Timestamp.from(expiry));
 
             ps.executeUpdate();
         }
@@ -83,7 +84,7 @@ public class SessionDAO {
         final String query = "UPDATE hwidaccounts SET relevance = ?, expiresat = ? WHERE accountid = ? AND hwid LIKE ?";
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setInt(1, loginRelevance);
-            ps.setTimestamp(2, Timestamp.from(expiry));
+            DatabaseConnection.setTimestamp(ps, 2, Timestamp.from(expiry));
             ps.setInt(3, accountId);
             ps.setString(4, hwid.hwid());
 

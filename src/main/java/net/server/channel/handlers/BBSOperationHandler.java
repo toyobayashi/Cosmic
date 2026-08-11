@@ -34,6 +34,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class BBSOperationHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(BBSOperationHandler.class);
@@ -100,6 +102,25 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
     }
 
     private static void listBBSThreads(Client c, int start) {
+        if (DatabaseConnection.isSqlite()) {
+            try (Connection con = DatabaseConnection.getConnection();
+                 PreparedStatement ps = con.prepareStatement("SELECT * FROM bbs_threads WHERE guildid = ? ORDER BY localthreadid DESC")) {
+                ps.setInt(1, c.getPlayer().getGuildId());
+                List<GuildPackets.BbsThreadRow> rows = new ArrayList<>();
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        rows.add(new GuildPackets.BbsThreadRow(
+                                rs.getInt("localthreadid"), rs.getInt("postercid"), rs.getString("name"),
+                                rs.getLong("timestamp"), rs.getInt("icon"), rs.getInt("replycount")));
+                    }
+                }
+                c.sendPacket(GuildPackets.BBSThreadList(c, rows, start));
+            } catch (SQLException se) {
+                se.printStackTrace();
+            }
+            return;
+        }
+
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT * FROM bbs_threads WHERE guildid = ? ORDER BY localthreadid DESC",
                      ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {

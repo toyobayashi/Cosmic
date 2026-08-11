@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- SQLite starts at the current final schema. MySQL history is deliberately not replayed here. -->
+    <include file="changelog-tables.xml" relativeToChangelogFile="true"/>
+    <include file="changelog-data.xml" relativeToChangelogFile="true"/>
+
+    <!-- SQLite extensions live separately from MySQL extensions. -->
+    <includeAll path="extensions" relativeToChangelogFile="true" errorIfMissingOrEmpty="false"/>
+</databaseChangeLog>

@@ -6,10 +6,15 @@ import java.util.Map;
 public class ServerConfig {
 
     //Database Configuration
+    public String DB_TYPE = "mysql";
+    public String DB_URL = "";
     public String DB_URL_FORMAT;
     public String DB_HOST;
     public String DB_USER;
     public String DB_PASS;
+    public String SQLITE_PATH = "database/cosmic.db";
+    public int SQLITE_BUSY_TIMEOUT_MS = 5000;
+    public int SQLITE_POOL_SIZE = 4;
     public int INIT_CONNECTION_POOL_TIMEOUT;
 
     //Login Configuration

@@ -166,7 +166,7 @@ public class DueyProcessor {
 
             dueypack.setSender(rs.getString("SenderName"));
             dueypack.setMesos(rs.getInt("Mesos"));
-            dueypack.setSentTime(rs.getTimestamp("TimeStamp"), rs.getBoolean("Type"));
+            dueypack.setSentTime(DatabaseConnection.getTimestamp(rs, "TimeStamp"), rs.getBoolean("Type"));
             dueypack.setMessage(rs.getString("Message"));
 
             return dueypack;
@@ -206,7 +206,7 @@ public class DueyProcessor {
             ps.setInt(1, toCid);
             ps.setString(2, sender);
             ps.setInt(3, mesos);
-            ps.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
+            DatabaseConnection.setTimestamp(ps, 4, new Timestamp(System.currentTimeMillis()));
             ps.setString(5, message);
             ps.setInt(6, quick ? 1 : 0);
 
@@ -488,7 +488,7 @@ public class DueyProcessor {
         try (Connection con = DatabaseConnection.getConnection()) {
             List<Integer> toRemove = new LinkedList<>();
             try (PreparedStatement ps = con.prepareStatement("SELECT `PackageId` FROM dueypackages WHERE `TimeStamp` < ?")) {
-                ps.setTimestamp(1, ts);
+                DatabaseConnection.setTimestamp(ps, 1, ts);
 
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
@@ -502,7 +502,7 @@ public class DueyProcessor {
             }
 
             try (PreparedStatement ps = con.prepareStatement("DELETE FROM dueypackages WHERE `TimeStamp` < ?")) {
-                ps.setTimestamp(1, ts);
+                DatabaseConnection.setTimestamp(ps, 1, ts);
                 ps.executeUpdate();
             }
         } catch (SQLException e) {

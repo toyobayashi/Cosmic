@@ -159,10 +159,15 @@ worlds:
 
 server:
     #Database Configuration
+    DB_TYPE: "mysql"                    # mysql (default) or sqlite
+    DB_URL: ""                          # Optional explicit JDBC URL; overrides the format/path below
     DB_URL_FORMAT: "jdbc:mysql://%s:3306/cosmic?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci" # If the docker ENV for DB_HOST is anything but "db", this string format should be changed from 3306 to 3307 (or whichever port it was changed to in docker) 
     DB_HOST: "localhost" 
     DB_USER: "root"
     DB_PASS: ""
+    SQLITE_PATH: "database/cosmic.db"   # Relative to the server working directory when DB_TYPE=sqlite
+    SQLITE_BUSY_TIMEOUT_MS: 5000
+    SQLITE_POOL_SIZE: 4
     INIT_CONNECTION_POOL_TIMEOUT: 90    # Seconds
 
     #Login Configuration

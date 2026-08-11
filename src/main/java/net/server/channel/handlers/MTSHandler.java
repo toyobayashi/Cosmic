@@ -684,9 +684,9 @@ public final class MTSHandler extends AbstractPacketHandler {
         try (Connection con = DatabaseConnection.getConnection()) {
             String sql;
             if (type != 0) {
-                sql = "SELECT * FROM mts_items WHERE tab = ? AND type = ? AND transfer = 0 ORDER BY id DESC LIMIT ?, 16";
+                sql = "SELECT * FROM mts_items WHERE tab = ? AND type = ? AND transfer = 0 ORDER BY id DESC LIMIT 16 OFFSET ?";
             } else {
-                sql = "SELECT * FROM mts_items WHERE tab = ? AND transfer = 0 ORDER BY id DESC LIMIT ?, 16";
+                sql = "SELECT * FROM mts_items WHERE tab = ? AND transfer = 0 ORDER BY id DESC LIMIT 16 OFFSET ?";
             }
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setInt(1, tab);
@@ -757,40 +757,56 @@ public final class MTSHandler extends AbstractPacketHandler {
     public Packet getMTSSearch(int tab, int type, int cOi, String search, int page) {
         List<MTSItemInfo> items = new ArrayList<>();
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        String listaitems = "";
+        List<Integer> matchingItemIds = new ArrayList<>();
+        boolean sellerNameSearch = false;
         if (cOi != 0) {
-            List<String> retItems = new ArrayList<>();
             for (Pair<Integer, String> itemPair : ii.getAllItems()) {
                 if (itemPair.getRight().toLowerCase().contains(search.toLowerCase())) {
-                    retItems.add(" itemid=" + itemPair.getLeft() + " OR ");
+                    matchingItemIds.add(itemPair.getLeft());
                 }
             }
-            listaitems += " AND (";
-            if (retItems != null && retItems.size() > 0) {
-                for (String singleRetItem : retItems) {
-                    listaitems += singleRetItem;
+        }
+
+        String itemFilter;
+        if (cOi != 0) {
+            if (matchingItemIds.isEmpty()) {
+                itemFilter = " AND 1 = 0";
+            } else {
+                StringBuilder placeholders = new StringBuilder(" AND itemid IN (");
+                for (int i = 0; i < matchingItemIds.size(); i++) {
+                    if (i > 0) {
+                        placeholders.append(", ");
+                    }
+                    placeholders.append("?");
                 }
-                listaitems += " itemid=0 )";
+                itemFilter = placeholders.append(")").toString();
             }
         } else {
-            listaitems = " AND sellername LIKE CONCAT('%','" + search + "', '%')";
+            itemFilter = " AND sellername LIKE ?";
+            sellerNameSearch = true;
         }
         int pages = 0;
         try (Connection con = DatabaseConnection.getConnection()){
             String sql;
             if (type != 0) {
-                sql = "SELECT * FROM mts_items WHERE tab = ? " + listaitems + " AND type = ? AND transfer = 0 ORDER BY id DESC LIMIT ?, 16";
+                sql = "SELECT * FROM mts_items WHERE tab = ? " + itemFilter + " AND type = ? AND transfer = 0 ORDER BY id DESC LIMIT 16 OFFSET ?";
             } else {
-                sql = "SELECT * FROM mts_items WHERE tab = ? " + listaitems + " AND transfer = 0 ORDER BY id DESC LIMIT ?, 16";
+                sql = "SELECT * FROM mts_items WHERE tab = ? " + itemFilter + " AND transfer = 0 ORDER BY id DESC LIMIT 16 OFFSET ?";
             }
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setInt(1, tab);
-                if (type != 0) {
-                    ps.setInt(2, type);
-                    ps.setInt(3, page * 16);
+                int nextParam = 2;
+                if (sellerNameSearch) {
+                    ps.setString(nextParam++, "%" + search + "%");
                 } else {
-                    ps.setInt(2, page * 16);
+                    for (int itemId : matchingItemIds) {
+                        ps.setInt(nextParam++, itemId);
+                    }
                 }
+                if (type != 0) {
+                    ps.setInt(nextParam++, type);
+                }
+                ps.setInt(nextParam, page * 16);
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
                     if (rs.getInt("type") != 1) {
@@ -830,10 +846,15 @@ public final class MTSHandler extends AbstractPacketHandler {
                 }
             }
             if (type == 0) {
-                try (PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM mts_items WHERE tab = ? " + listaitems + " AND transfer = 0")) {
+                try (PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM mts_items WHERE tab = ? " + itemFilter + " AND transfer = 0")) {
                     ps.setInt(1, tab);
-                    if (type != 0) {
-                        ps.setInt(2, type);
+                    int nextParam = 2;
+                    if (sellerNameSearch) {
+                        ps.setString(nextParam++, "%" + search + "%");
+                    } else {
+                        for (int itemId : matchingItemIds) {
+                            ps.setInt(nextParam++, itemId);
+                        }
                     }
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {

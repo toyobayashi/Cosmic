@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- These seed files contain standard INSERT/DELETE SQL and are shared with MySQL. -->
+    <changeSet id="sqlite-data-101" author="Cosmic"><sqlFile path="db/data/101-shops-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-102" author="Cosmic"><sqlFile path="db/data/102-shopitems-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-111" author="Cosmic"><sqlFile path="db/data/111-makercreate-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-112" author="Cosmic"><sqlFile path="db/data/112-makerrecipe-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-113" author="Cosmic"><sqlFile path="db/data/113-makerreward-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-114" author="Cosmic"><sqlFile path="db/data/114-makerreagent-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-121" author="Cosmic"><sqlFile path="db/data/121-monstercard-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-131" author="Cosmic"><sqlFile path="db/data/131-reactordrops-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-141" author="Cosmic"><sqlFile path="db/data/141-specialcashitems-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-142" author="Cosmic"><sqlFile path="db/data/142-nxcoupons-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-151" author="Cosmic"><sqlFile path="db/data/151-global-drop-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-152" author="Cosmic"><sqlFile path="db/data/152-drop-data.sql"/></changeSet>
+    <changeSet id="sqlite-data-161" author="Cosmic"><sqlFile path="db/data/161-admin-data.sql"/></changeSet>
+
+    <!-- 162/164 are ordinary DML. Charset conversion and MySQL ALTER/MODIFY history are omitted. -->
+    <changeSet id="sqlite-migration-162" author="Cosmic"><sqlFile path="db/migrations/162-webadmin-default.sql"/></changeSet>
+    <changeSet id="sqlite-migration-164" author="Cosmic"><sqlFile path="db/migrations/164-monster-park-merchant.sql"/></changeSet>
+    <changeSet id="sqlite-migration-167" author="Cosmic"><sqlFile path="db/sqlite/migrations/167-time-text.sql"/></changeSet>
+</databaseChangeLog>

@@ -75,7 +75,7 @@ public class JdbiSponsorRepository implements SponsorRepository {
     public SponsorOrderDTO awardPendingOrder(String orderId, int awardedNx, int awardedBy) {
         try (Handle handle = DatabaseConnection.getHandle()) {
             return handle.inTransaction(transaction -> {
-                SponsorOrderDTO order = transaction.createQuery(baseSelect() + " WHERE o.order_id = ? FOR UPDATE")
+                SponsorOrderDTO order = transaction.createQuery(baseSelect() + " WHERE o.order_id = ?")
                         .bind(0, orderId)
                         .mapToMap()
                         .findOne()
@@ -85,11 +85,6 @@ public class JdbiSponsorRepository implements SponsorRepository {
                 if (!SponsorService.STATUS_PENDING.equals(order.getStatus())) {
                     throw new IllegalArgumentException("Sponsor order has already been awarded");
                 }
-
-                transaction.createUpdate("UPDATE accounts SET nxCredit = COALESCE(nxCredit, 0) + ? WHERE name = ?")
-                        .bind(0, awardedNx)
-                        .bind(1, order.getAccount())
-                        .execute();
 
                 int updated = transaction.createUpdate("""
                                 UPDATE sponsor_orders
@@ -103,6 +98,14 @@ public class JdbiSponsorRepository implements SponsorRepository {
                 if (updated != 1) {
                     throw new IllegalArgumentException("Sponsor order has already been awarded");
                 }
+
+                int accountUpdated = transaction.createUpdate("UPDATE accounts SET nxCredit = COALESCE(nxCredit, 0) + ? WHERE name = ?")
+                        .bind(0, awardedNx)
+                        .bind(1, order.getAccount())
+                        .execute();
+                if (accountUpdated != 1) {
+                    throw new IllegalArgumentException("Sponsor account not found: " + order.getAccount());
+                }
                 return getOrder(transaction, orderId);
             });
         }
@@ -112,7 +115,7 @@ public class JdbiSponsorRepository implements SponsorRepository {
     public SponsorOrderDTO closePendingOrder(String orderId, int closedBy) {
         try (Handle handle = DatabaseConnection.getHandle()) {
             return handle.inTransaction(transaction -> {
-                SponsorOrderDTO order = transaction.createQuery(baseSelect() + " WHERE o.order_id = ? FOR UPDATE")
+                SponsorOrderDTO order = transaction.createQuery(baseSelect() + " WHERE o.order_id = ?")
                         .bind(0, orderId)
                         .mapToMap()
                         .findOne()

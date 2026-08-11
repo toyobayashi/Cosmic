@@ -54,7 +54,7 @@ public class ExpLogger {
                     ps.setFloat(2, expLogRecord.expCoupon);
                     ps.setLong(3, expLogRecord.gainedExp);
                     ps.setInt(4, expLogRecord.currentExp);
-                    ps.setTimestamp(5, expLogRecord.expGainTime);
+                    DatabaseConnection.setTimestamp(ps, 5, expLogRecord.expGainTime);
                     ps.setInt(6, expLogRecord.charid);
                     ps.addBatch();
                 }

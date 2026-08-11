@@ -414,7 +414,7 @@ public class CashShop {
 
     public void gift(int recipient, String from, String message, int sn, int ringid) {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("INSERT INTO `gifts` VALUES (DEFAULT, ?, ?, ?, ?, ?)")) {
+             PreparedStatement ps = con.prepareStatement("INSERT INTO `gifts` (`to`, `from`, message, sn, ringid) VALUES (?, ?, ?, ?, ?)")) {
             ps.setInt(1, recipient);
             ps.setString(2, from);
             ps.setString(3, message);
@@ -503,7 +503,7 @@ public class CashShop {
             ps.executeUpdate();
         }
 
-        try (PreparedStatement ps = con.prepareStatement("INSERT INTO `wishlists` VALUES (DEFAULT, ?, ?)")) {
+        try (PreparedStatement ps = con.prepareStatement("INSERT INTO `wishlists` (charid, sn) VALUES (?, ?)")) {
             ps.setInt(1, characterId);
 
             for (int sn : wishList) {

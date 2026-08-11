@@ -436,12 +436,14 @@ public class Client extends ChannelInboundHandlerAdapter {
     public boolean hasBannedIP() {
         boolean ret = false;
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM ipbans WHERE ? LIKE CONCAT(ip, '%')")) {
-            ps.setString(1, remoteAddress);
+             PreparedStatement ps = con.prepareStatement("SELECT ip FROM ipbans")) {
             try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                if (rs.getInt(1) > 0) {
-                    ret = true;
+                while (rs.next()) {
+                    String bannedPrefix = rs.getString("ip");
+                    if (bannedPrefix != null && remoteAddress.startsWith(bannedPrefix)) {
+                        ret = true;
+                        break;
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -805,7 +807,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                     return null;
                 }
 
-                tempban = rs.getTimestamp("tempban");
+                tempban = DatabaseConnection.getTimestamp(rs, "tempban");
                 if (tempban.toLocalDateTime().equals(DefaultDates.getTempban())) {
                     return null;
                 }
@@ -896,7 +898,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             // using sql currenttime here could potentially break the login, thanks Arnah for pointing this out
 
             ps.setInt(1, newState);
-            ps.setTimestamp(2, new java.sql.Timestamp(Server.getInstance().getCurrentTime()));
+            DatabaseConnection.setTimestamp(ps, 2, new java.sql.Timestamp(Server.getInstance().getCurrentTime()));
             ps.setInt(3, getAccID());
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -926,13 +928,13 @@ public class Client extends ChannelInboundHandlerAdapter {
 
                     birthday = Calendar.getInstance();
                     try {
-                        birthday.setTime(rs.getDate("birthday"));
+                        birthday.setTime(DatabaseConnection.getDate(rs, "birthday"));
                     } catch (SQLException e) {
                     }
 
                     state = rs.getInt("loggedin");
                     if (state == LOGIN_SERVER_TRANSITION) {
-                        if (rs.getTimestamp("lastlogin").getTime() + 30000 < Server.getInstance().getCurrentTime()) {
+                        if (DatabaseConnection.getTimestamp(rs, "lastlogin").getTime() + 30000 < Server.getInstance().getCurrentTime()) {
                             int accountId = accId;
                             state = LOGIN_NOTLOGGEDIN;
                             updateLoginState(Client.LOGIN_NOTLOGGEDIN);   // ACCID = 0, issue found thanks to Tochi & K u ssss o & Thora & Omo Oppa

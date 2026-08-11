@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -181,11 +182,7 @@ public final class MonsterBook {
     }
 
     public void saveCards(Connection con, int chrId) throws SQLException {
-        final String query = """
-                INSERT INTO monsterbook (charid, cardid, level)
-                VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE level = ?;
-                """;
+        final String query = DatabaseConnection.getDialect().upsertMonsterBookSql();
         try (final PreparedStatement ps = con.prepareStatement(query)) {
             for (Map.Entry<Integer, Integer> cardAndLevel : cards.entrySet()) {
                 final int card = cardAndLevel.getKey();
@@ -206,17 +203,14 @@ public final class MonsterBook {
 
     public static int[] getCardTierSize() {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM monstercarddata GROUP BY floor(cardid / 1000);", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+             PreparedStatement ps = con.prepareStatement("SELECT cardid FROM monstercarddata");
              ResultSet rs = ps.executeQuery()) {
-            rs.last();
-            int[] tierSizes = new int[rs.getRow()];
-            rs.beforeFirst();
-
+            Map<Integer, Integer> counts = new TreeMap<>();
             while (rs.next()) {
-                tierSizes[rs.getRow() - 1] = rs.getInt(1);
+                int tier = rs.getInt("cardid") / 1000;
+                counts.merge(tier, 1, Integer::sum);
             }
-
-            return tierSizes;
+            return counts.values().stream().mapToInt(Integer::intValue).toArray();
         } catch (SQLException e) {
             e.printStackTrace();
             return new int[0];

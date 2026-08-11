@@ -70,7 +70,7 @@ public final class TransferNameHandler extends AbstractPacketHandler {
             ps.setInt(1, chr.getId());
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Timestamp completedTimestamp = rs.getTimestamp("completionTime");
+                Timestamp completedTimestamp = DatabaseConnection.getTimestamp(rs, "completionTime");
                 if (completedTimestamp == null) { //has pending name request
                     c.sendPacket(PacketCreator.sendNameTransferRules(1));
                     return;

@@ -759,6 +759,24 @@ public class Guild {
     }
 
     public static void displayGuildRanks(Client c, int npcid) {
+        if (DatabaseConnection.isSqlite()) {
+            try (Connection con = DatabaseConnection.getConnection();
+                 PreparedStatement ps = con.prepareStatement("SELECT `name`, `GP`, `logoBG`, `logoBGColor`, `logo`, `logoColor` FROM guilds ORDER BY `GP` DESC LIMIT 50")) {
+                List<GuildPackets.GuildRankRow> rows = new ArrayList<>();
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        rows.add(new GuildPackets.GuildRankRow(
+                                rs.getString("name"), rs.getInt("GP"), rs.getInt("logoBG"),
+                                rs.getInt("logoBGColor"), rs.getInt("logo"), rs.getInt("logoColor")));
+                    }
+                }
+                c.sendPacket(GuildPackets.showGuildRanks(c, npcid, rows));
+            } catch (SQLException e) {
+                log.error("Failed to display guild ranks.", e);
+            }
+            return;
+        }
+
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT `name`, `GP`, `logoBG`, `logoBGColor`, `logo`, `logoColor` FROM guilds ORDER BY `GP` DESC LIMIT 50", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
              ResultSet rs = ps.executeQuery()) {

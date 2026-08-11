@@ -760,7 +760,7 @@ public class Character extends AbstractCharacterObject {
     public static boolean ban(String id, String reason, boolean accountId) {
         try (Connection con = DatabaseConnection.getConnection()) {
             if (id.matches("/[0-9]{1,3}\\..*")) {
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO ipbans VALUES (DEFAULT, ?)")) {
+                try (PreparedStatement ps = con.prepareStatement("INSERT INTO ipbans (ip) VALUES (?)")) {
                     ps.setString(1, id);
                     ps.executeUpdate();
                     return true;
@@ -5382,7 +5382,7 @@ public class Character extends AbstractCharacterObject {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    elapsedDays = FredrickProcessor.timestampElapsedDays(rs.getTimestamp(1), System.currentTimeMillis());
+                    elapsedDays = FredrickProcessor.timestampElapsedDays(DatabaseConnection.getTimestamp(rs, 1), System.currentTimeMillis());
                 }
             }
         } catch (SQLException e) {
@@ -7020,7 +7020,7 @@ public class Character extends AbstractCharacterObject {
                     ret.mgc = new GuildCharacter(ret);
                     int buddyCapacity = rs.getInt("buddyCapacity");
                     ret.buddylist = new BuddyList(buddyCapacity);
-                    ret.lastExpGainTime = rs.getTimestamp("lastExpGainTime").getTime();
+                    ret.lastExpGainTime = DatabaseConnection.getTimestamp(rs, "lastExpGainTime").getTime();
                     ret.canRecvPartySearchInvite = rs.getBoolean("partySearch");
 
                     wserv = Server.getInstance().getWorld(ret.world);
@@ -7387,14 +7387,15 @@ public class Character extends AbstractCharacterObject {
                 }
 
                 // Fame history
-                try (PreparedStatement ps = con.prepareStatement("SELECT `characterid_to`,`when` FROM famelog WHERE characterid = ? AND DATEDIFF(NOW(),`when`) < 30")) {
+                try (PreparedStatement ps = con.prepareStatement("SELECT `characterid_to`,`when` FROM famelog WHERE characterid = ? AND `when` >= ?")) {
                     ps.setInt(1, charid);
+                    DatabaseConnection.setTimestamp(ps, 2, new Timestamp(System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000));
 
                     try (ResultSet rs = ps.executeQuery()) {
                         ret.lastfametime = 0;
                         ret.lastmonthfameids = new ArrayList<>(31);
                         while (rs.next()) {
-                            ret.lastfametime = Math.max(ret.lastfametime, rs.getTimestamp("when").getTime());
+                            ret.lastfametime = Math.max(ret.lastfametime, DatabaseConnection.getTimestamp(rs, "when").getTime());
                             ret.lastmonthfameids.add(rs.getInt("characterid_to"));
                         }
                     }
@@ -8249,7 +8250,7 @@ public class Character extends AbstractCharacterObject {
 
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
-            con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+            DatabaseConnection.setTransactionIsolation(con, Connection.TRANSACTION_READ_UNCOMMITTED);
 
             try {
                 // Character info
@@ -8333,7 +8334,7 @@ public class Character extends AbstractCharacterObject {
                     long nQuickslotKeymapped = LongTool.BytesToLong(this.m_pQuickslotKeyMapped.GetKeybindings());
 
                     // Quickslot key config
-                    try (PreparedStatement ps = con.prepareStatement("INSERT INTO quickslotkeymapped (accountid, keymap) VALUES (?, ?) ON DUPLICATE KEY UPDATE keymap = ?;")) {
+                    try (PreparedStatement ps = con.prepareStatement(DatabaseConnection.getDialect().upsertQuickslotSql())) {
                         ps.setInt(1, this.getAccountID());
                         ps.setLong(2, nQuickslotKeymapped);
                         ps.setLong(3, nQuickslotKeymapped);
@@ -8371,7 +8372,7 @@ public class Character extends AbstractCharacterObject {
                 con.rollback();
                 throw e;
             } finally {
-                con.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+                DatabaseConnection.setTransactionIsolation(con, Connection.TRANSACTION_REPEATABLE_READ);
                 con.setAutoCommit(true);
             }
         } catch (Throwable t) {
@@ -8410,7 +8411,7 @@ public class Character extends AbstractCharacterObject {
 
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
-            con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+            DatabaseConnection.setTransactionIsolation(con, Connection.TRANSACTION_READ_UNCOMMITTED);
 
             try {
                 try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
@@ -8524,7 +8525,7 @@ public class Character extends AbstractCharacterObject {
                     ps.setLong(50, jailExpiration);
                     ps.setInt(51, partnerId);
                     ps.setInt(52, marriageItemid);
-                    ps.setTimestamp(53, new Timestamp(lastExpGainTime));
+                    DatabaseConnection.setTimestamp(ps, 53, new Timestamp(lastExpGainTime));
                     ps.setInt(54, ariantPoints);
                     ps.setBoolean(55, canRecvPartySearchInvite);
                     ps.setInt(56, id);
@@ -8587,7 +8588,7 @@ public class Character extends AbstractCharacterObject {
                 if (!bQuickslotEquals) {
                     long nQuickslotKeymapped = LongTool.BytesToLong(this.m_pQuickslotKeyMapped.GetKeybindings());
 
-                    try (final PreparedStatement psQuick = con.prepareStatement("INSERT INTO quickslotkeymapped (accountid, keymap) VALUES (?, ?) ON DUPLICATE KEY UPDATE keymap = ?;")) {
+                    try (final PreparedStatement psQuick = con.prepareStatement(DatabaseConnection.getDialect().upsertQuickslotSql())) {
                         psQuick.setInt(1, this.getAccountID());
                         psQuick.setLong(2, nQuickslotKeymapped);
                         psQuick.setLong(3, nQuickslotKeymapped);
@@ -8625,7 +8626,7 @@ public class Character extends AbstractCharacterObject {
                 ItemFactory.INVENTORY.saveItems(itemsWithType, id, con);
 
                 // Skills
-                try (PreparedStatement psSkill = con.prepareStatement("REPLACE INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) VALUES (?, ?, ?, ?, ?)")) {
+                try (PreparedStatement psSkill = con.prepareStatement(DatabaseConnection.getDialect().upsertSkillSql())) {
                     psSkill.setInt(1, id);
                     for (Entry<Skill, SkillEntry> skill : skills.entrySet()) {
                         psSkill.setInt(2, skill.getKey().getId());
@@ -8695,7 +8696,7 @@ public class Character extends AbstractCharacterObject {
 
                 // Area info
                 deleteWhereCharacterId(con, "DELETE FROM area_info WHERE charid = ?");
-                try (PreparedStatement psArea = con.prepareStatement("INSERT INTO area_info (id, charid, area, info) VALUES (DEFAULT, ?, ?, ?)")) {
+                try (PreparedStatement psArea = con.prepareStatement("INSERT INTO area_info (charid, area, info) VALUES (?, ?, ?)")) {
                     psArea.setInt(1, id);
 
                     for (Entry<Short, String> area : area_info.entrySet()) {
@@ -8723,9 +8724,9 @@ public class Character extends AbstractCharacterObject {
                 deleteQuestProgressWhereCharacterId(con, id);
 
                 // Quests and medals
-                try (PreparedStatement psStatus = con.prepareStatement("INSERT INTO queststatus (`queststatusid`, `characterid`, `quest`, `status`, `time`, `expires`, `forfeited`, `completed`) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
-                     PreparedStatement psProgress = con.prepareStatement("INSERT INTO questprogress VALUES (DEFAULT, ?, ?, ?, ?)");
-                     PreparedStatement psMedal = con.prepareStatement("INSERT INTO medalmaps VALUES (DEFAULT, ?, ?, ?)")) {
+                try (PreparedStatement psStatus = con.prepareStatement("INSERT INTO queststatus (`characterid`, `quest`, `status`, `time`, `expires`, `forfeited`, `completed`) VALUES (?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+                     PreparedStatement psProgress = con.prepareStatement("INSERT INTO questprogress (`characterid`, `queststatusid`, `progressid`, `progress`) VALUES (?, ?, ?, ?)");
+                     PreparedStatement psMedal = con.prepareStatement("INSERT INTO medalmaps (`characterid`, `queststatusid`, `mapid`) VALUES (?, ?, ?)")) {
                     psStatus.setInt(1, id);
 
                     for (QuestStatus qs : getQuests()) {
@@ -8793,7 +8794,7 @@ public class Character extends AbstractCharacterObject {
                 con.rollback();
                 throw e;
             } finally {
-                con.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+                DatabaseConnection.setTransactionIsolation(con, Connection.TRANSACTION_REPEATABLE_READ);
                 con.setAutoCommit(true);
             }
         } catch (Exception e) {
@@ -9982,7 +9983,7 @@ public class Character extends AbstractCharacterObject {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE accounts SET banreason = ?, tempban = ?, greason = ? WHERE id = ?")) {
             ps.setString(1, desc);
-            ps.setTimestamp(2, TS);
+            DatabaseConnection.setTimestamp(ps, 2, TS);
             ps.setInt(3, reason);
             ps.setInt(4, accountid);
             ps.executeUpdate();
@@ -10327,7 +10328,7 @@ public class Character extends AbstractCharacterObject {
 
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE characters SET lastLogoutTime=? WHERE id=?")) {
-            ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+            DatabaseConnection.setTimestamp(ps, 1, new Timestamp(System.currentTimeMillis()));
             ps.setInt(2, getId());
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -10443,7 +10444,7 @@ public class Character extends AbstractCharacterObject {
 
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        Timestamp completedTimestamp = rs.getTimestamp("completionTime");
+                        Timestamp completedTimestamp = DatabaseConnection.getTimestamp(rs, "completionTime");
                         if (completedTimestamp == null) {
                             return false; //pending
                         } else if (completedTimestamp.getTime() + YamlConfig.config.server.NAME_CHANGE_COOLDOWN > currentTimeMillis) {
@@ -10664,7 +10665,7 @@ public class Character extends AbstractCharacterObject {
 
         if (nameChangeId != -1) {
             try (PreparedStatement ps = con.prepareStatement("UPDATE namechanges SET completionTime = ? WHERE id = ?")) {
-                ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+             DatabaseConnection.setTimestamp(ps, 1, new Timestamp(System.currentTimeMillis()));
                 ps.setInt(2, nameChangeId);
                 ps.executeUpdate();
             } catch (SQLException e) {
@@ -10725,7 +10726,7 @@ public class Character extends AbstractCharacterObject {
             if (!rs.next()) {
                 return "Account does not exist.";
             }
-            LocalDateTime tempban = rs.getTimestamp("tempban").toLocalDateTime();
+            LocalDateTime tempban = DatabaseConnection.getTimestamp(rs, "tempban").toLocalDateTime();
             if (!tempban.equals(DefaultDates.getTempban())) {
                 return "Account has been banned.";
             }
@@ -10758,7 +10759,7 @@ public class Character extends AbstractCharacterObject {
                 ps.setInt(1, getId());
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
-                    Timestamp completedTimestamp = rs.getTimestamp("completionTime");
+                    Timestamp completedTimestamp = DatabaseConnection.getTimestamp(rs, "completionTime");
                     if (completedTimestamp == null) {
                         return false; //pending
                     } else if (completedTimestamp.getTime() + YamlConfig.config.server.WORLD_TRANSFER_COOLDOWN > currentTimeMillis) {
@@ -10832,7 +10833,7 @@ public class Character extends AbstractCharacterObject {
         }
         if (worldTransferId != -1) {
             try (PreparedStatement ps = con.prepareStatement("UPDATE worldtransfers SET completionTime = ? WHERE id = ?")) {
-                ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+            DatabaseConnection.setTimestamp(ps, 1, new Timestamp(System.currentTimeMillis()));
                 ps.setInt(2, worldTransferId);
                 ps.executeUpdate();
             } catch (SQLException e) {

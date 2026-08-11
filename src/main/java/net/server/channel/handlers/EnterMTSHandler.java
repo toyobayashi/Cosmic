@@ -119,7 +119,7 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
         List<MTSItemInfo> items = new ArrayList<>();
         int pages = 0;
         try (Connection con = DatabaseConnection.getConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT * FROM mts_items WHERE tab = 1 AND transfer = 0 ORDER BY id DESC LIMIT 16, 16");
+            try (PreparedStatement ps = con.prepareStatement("SELECT * FROM mts_items WHERE tab = 1 AND transfer = 0 ORDER BY id DESC LIMIT 16 OFFSET 16");
                  ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     if (rs.getInt("type") != 1) {

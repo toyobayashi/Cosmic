@@ -129,7 +129,7 @@ public class FredrickProcessor {
             removeFredrickLog(con, cid);
             try (PreparedStatement ps = con.prepareStatement("INSERT INTO `fredstorage` (`cid`, `daynotes`, `timestamp`) VALUES (?, 0, ?)")) {
                 ps.setInt(1, cid);
-                ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+                DatabaseConnection.setTimestamp(ps, 2, new Timestamp(System.currentTimeMillis()));
                 ps.executeUpdate();
             }
         } catch (SQLException sqle) {
@@ -170,7 +170,7 @@ public class FredrickProcessor {
                 while (rs.next()) {
                     int cid = rs.getInt("cid");
                     int world = rs.getInt("world");
-                    Timestamp ts = rs.getTimestamp("timestamp");
+                    Timestamp ts = DatabaseConnection.getTimestamp(rs, "timestamp");
                     int daynotes = Math.min(dailyReminders.length - 1, rs.getInt("daynotes"));
 
                     int elapsedDays = timestampElapsedDays(ts, curTime);
@@ -185,7 +185,7 @@ public class FredrickProcessor {
                                 notifDay = dailyReminders[daynotes];
                             } while (elapsedDays >= notifDay);
 
-                            Timestamp logoutTs = rs.getTimestamp("lastLogoutTime");
+                            Timestamp logoutTs = DatabaseConnection.getTimestamp(rs, "lastLogoutTime");
                             int inactivityDays = timestampElapsedDays(logoutTs, curTime);
 
                             if (inactivityDays < 7 || daynotes >= dailyReminders.length - 1) {  // don't spam inactive players

@@ -21,6 +21,9 @@
 # Database
 database/docker-db-data
 database/docker-pg-db-data
+database/*.db
+database/*.db-wal
+database/*.db-shm
 
 # macOS files
 .DS_Store

@@ -2,8 +2,9 @@ version: '3'
 services:
   maplestory:
     build: .
-    depends_on:
-      - db
+    # Keep this service dependency-free so `docker compose up maplestory` can
+    # run SQLite without starting the MySQL service. `docker compose up`
+    # without a service name still starts both services as before.
     ports:
       # Login server
       - "8484:8484"
@@ -17,8 +18,12 @@ services:
       - ./config.yaml:/opt/server/config.yaml
       - ./scripts:/opt/server/scripts
       - ./wz:/opt/server/wz
+      # Persists SQLite's database file and its WAL/SHM sidecar files.
+      - ./database:/opt/server/database
     environment:
-      DB_HOST: "db" ## Remember if this is present it will OVERRIDE the host in the config.yaml, if you put here anything other than db, you'll need to change the config.yaml jdbc string to port 3307, and not port 3306
+      # Defaults preserve the existing MySQL deployment. Use DB_TYPE=sqlite for SQLite.
+      DB_TYPE: "${DB_TYPE:-mysql}"
+      DB_HOST: "${DB_HOST:-db}" ## If present this overrides the host in config.yaml.
     
   db:
     image: mysql:8.4.0

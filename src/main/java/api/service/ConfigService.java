@@ -165,10 +165,15 @@ public class ConfigService {
 
     private void writeServerConfig(BufferedWriter w, ServerConfig sc) throws IOException {
         w.write("    #Database Configuration\n");
+        w.write("    DB_TYPE: \"" + escapeYaml(sc.DB_TYPE) + "\"\n");
+        w.write("    DB_URL: \"" + escapeYaml(sc.DB_URL) + "\"\n");
         w.write("    DB_URL_FORMAT: \"" + escapeYaml(sc.DB_URL_FORMAT) + "\"\n");
         w.write("    DB_HOST: \"" + escapeYaml(sc.DB_HOST) + "\"\n");
         w.write("    DB_USER: \"" + escapeYaml(sc.DB_USER) + "\"\n");
         w.write("    DB_PASS: \"" + escapeYaml(sc.DB_PASS) + "\"\n");
+        w.write("    SQLITE_PATH: \"" + escapeYaml(sc.SQLITE_PATH) + "\"\n");
+        w.write("    SQLITE_BUSY_TIMEOUT_MS: " + sc.SQLITE_BUSY_TIMEOUT_MS + "\n");
+        w.write("    SQLITE_POOL_SIZE: " + sc.SQLITE_POOL_SIZE + "\n");
         w.write("    INIT_CONNECTION_POOL_TIMEOUT: " + sc.INIT_CONNECTION_POOL_TIMEOUT + "\n");
         w.write("\n    #Login Configuration\n");
         writeField(w, "WORLDS", sc.WORLDS);
@@ -488,10 +493,15 @@ public class ConfigService {
     private Map<String, String> getCategoryMap() {
         Map<String, String> map = new LinkedHashMap<>();
 
+        map.put("DB_TYPE", "Database");
+        map.put("DB_URL", "Database");
         map.put("DB_URL_FORMAT", "Database");
         map.put("DB_HOST", "Database");
         map.put("DB_USER", "Database");
         map.put("DB_PASS", "Database");
+        map.put("SQLITE_PATH", "Database");
+        map.put("SQLITE_BUSY_TIMEOUT_MS", "Database");
+        map.put("SQLITE_POOL_SIZE", "Database");
 
         map.put("HOST", "Network");
         map.put("LANHOST", "Network");

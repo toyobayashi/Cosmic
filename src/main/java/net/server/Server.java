@@ -597,12 +597,12 @@ public class Server {
             ps.setLong(1, timeClear);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.isLast()) {
+                if (rs.next()) {
                     try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM nxcode_items WHERE codeid = ?")) {
-                        while (rs.next()) {
+                        do {
                             ps2.setInt(1, rs.getInt("id"));
                             ps2.addBatch();
-                        }
+                        } while (rs.next());
                         ps2.executeBatch();
                     }
 
@@ -1652,15 +1652,27 @@ public class Server {
     }
 
     private static void applyAllWorldTransfers(Connection con) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM worldtransfers WHERE completionTime IS NULL",
-                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-             ResultSet rs = ps.executeQuery()) {
+        record PendingTransfer(int id, int characterId, int oldWorld, int newWorld) {
+        }
+
+        try (PreparedStatement ps = con.prepareStatement("SELECT * FROM worldtransfers WHERE completionTime IS NULL")) {
+            List<PendingTransfer> pendingTransfers = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    pendingTransfers.add(new PendingTransfer(
+                            rs.getInt("id"),
+                            rs.getInt("characterId"),
+                            rs.getInt("from"),
+                            rs.getInt("to")));
+                }
+            }
+
             List<Integer> removedTransfers = new LinkedList<>();
-            while (rs.next()) {
-                int nameChangeId = rs.getInt("id");
-                int characterId = rs.getInt("characterId");
-                int oldWorld = rs.getInt("from");
-                int newWorld = rs.getInt("to");
+            for (PendingTransfer transfer : pendingTransfers) {
+                int nameChangeId = transfer.id();
+                int characterId = transfer.characterId();
+                int oldWorld = transfer.oldWorld();
+                int newWorld = transfer.newWorld();
                 String reason = Character.checkWorldTransferEligibility(con, characterId, oldWorld, newWorld); //check if character is still eligible
                 if (reason != null) {
                     removedTransfers.add(nameChangeId);
@@ -1673,25 +1685,20 @@ public class Server {
                     }
                 }
             }
-            rs.beforeFirst();
             List<Pair<Integer, Pair<Integer, Integer>>> worldTransfers = new LinkedList<>(); //logging only <charid, <oldWorld, newWorld>>
 
             con.setAutoCommit(false);
             try {
-                while (rs.next()) {
-                    int nameChangeId = rs.getInt("id");
-                    if (removedTransfers.contains(nameChangeId)) {
+                for (PendingTransfer transfer : pendingTransfers) {
+                    if (removedTransfers.contains(transfer.id())) {
                         continue;
                     }
-                    int characterId = rs.getInt("characterId");
-                    int oldWorld = rs.getInt("from");
-                    int newWorld = rs.getInt("to");
-                    boolean success = Character.doWorldTransfer(con, characterId, oldWorld, newWorld, nameChangeId);
+                    boolean success = Character.doWorldTransfer(con, transfer.characterId(), transfer.oldWorld(), transfer.newWorld(), transfer.id());
                     if (!success) {
                         con.rollback();
                     } else {
                         con.commit();
-                        worldTransfers.add(new Pair<>(characterId, new Pair<>(oldWorld, newWorld)));
+                        worldTransfers.add(new Pair<>(transfer.characterId(), new Pair<>(transfer.oldWorld(), transfer.newWorld())));
                     }
                 }
             } finally {

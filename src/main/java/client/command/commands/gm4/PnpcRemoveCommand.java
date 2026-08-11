@@ -60,14 +60,14 @@ public class PnpcRemoveCommand extends Command {
             final PreparedStatement ps;
             if (npcId > -1) {
                 String select = "SELECT * FROM plife WHERE world = ? AND map = ? AND type LIKE ? AND life = ?";
-                ps = con.prepareStatement(select, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                ps = con.prepareStatement(select);
                 ps.setInt(1, player.getWorld());
                 ps.setInt(2, mapId);
                 ps.setString(3, "n");
                 ps.setInt(4, npcId);
             } else {
                 String select = "SELECT * FROM plife WHERE world = ? AND map = ? AND type LIKE ? AND x >= ? AND x <= ? AND y >= ? AND y <= ?";
-                ps = con.prepareStatement(select, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                ps = con.prepareStatement(select);
                 ps.setInt(1, player.getWorld());
                 ps.setInt(2, mapId);
                 ps.setString(3, "n");
@@ -77,19 +77,20 @@ public class PnpcRemoveCommand extends Command {
                 ps.setInt(7, ypos + 50);
             }
 
+            List<Integer> lifeIds = new LinkedList<>();
             try (ResultSet rs = ps.executeQuery()) {
-                while (true) {
-                    rs.beforeFirst();
-                    if (!rs.next()) {
-                        break;
-                    }
-
+                while (rs.next()) {
+                    lifeIds.add(rs.getInt("id"));
                     toRemove.add(new Pair<>(rs.getInt("life"), new Pair<>(rs.getInt("x"), rs.getInt("y"))));
-                    rs.deleteRow();
                 }
             }
-
-            ps.close();
+            try (PreparedStatement delete = con.prepareStatement("DELETE FROM plife WHERE id = ?")) {
+                for (int lifeId : lifeIds) {
+                    delete.setInt(1, lifeId);
+                    delete.addBatch();
+                }
+                delete.executeBatch();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             player.dropMessage(5, "Failed to remove pNPC from the database.");

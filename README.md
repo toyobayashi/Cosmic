@@ -59,6 +59,23 @@ We will set up the following:
 ### 1 - Database 
 You will start by installing the database server and database client. Then you will connect to the server with the client to create a new database schema.
 
+#### SQLite (optional)
+
+For local development, single-machine testing, or a small private server, Cosmic can create and manage a SQLite database file without a separate database service. Set the following fields in `config.yaml` before starting:
+
+```yaml
+server:
+    DB_TYPE: "sqlite"
+    DB_URL: ""
+    SQLITE_PATH: "database/cosmic.db"
+    SQLITE_BUSY_TIMEOUT_MS: 5000
+    SQLITE_POOL_SIZE: 4
+```
+
+The parent directory is created automatically and Liquibase initializes a new file with the current schema and seed data. `DB_TYPE` defaults to `mysql`, so existing MySQL configurations continue to use the original MySQL URL, credentials, and changelog. `DB_URL` may be used to provide an explicit JDBC URL; `DB_HOST` only affects MySQL.
+
+SQLite uses WAL mode, foreign-key enforcement, a 5-second busy timeout, and a small connection pool. Keep the database file on local disk and use one Cosmic instance per file. MySQL remains the recommended backend for multiple instances or high write concurrency. Do not copy only the `.db` file while the server is running; stop the server first or use a SQLite-aware online backup procedure.
+
 #### Steps
 
 1. Download and install [MySQL Community Server 8+](https://dev.mysql.com/downloads/mysql/). You will have to set a root password. Make sure you don't lose it because you will need it later.

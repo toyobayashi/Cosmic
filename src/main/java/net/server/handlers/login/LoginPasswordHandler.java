@@ -43,7 +43,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.Calendar;
 
 public final class LoginPasswordHandler implements PacketHandler {
@@ -81,8 +80,8 @@ public final class LoginPasswordHandler implements PacketHandler {
                  PreparedStatement ps = con.prepareStatement("INSERT INTO accounts (name, password, birthday, tempban) VALUES (?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) { //Jayd: Added birthday, tempban
                 ps.setString(1, login);
                 ps.setString(2, YamlConfig.config.server.BCRYPT_MIGRATION ? BCrypt.hashpw(pwd, BCrypt.gensalt(12)) : hashpwSHA512(pwd));
-                ps.setDate(3, Date.valueOf(DefaultDates.getBirthday()));
-                ps.setTimestamp(4, Timestamp.valueOf(DefaultDates.getTempban()));
+                DatabaseConnection.setDate(ps, 3, Date.valueOf(DefaultDates.getBirthday()));
+                DatabaseConnection.setLocalDateTime(ps, 4, DefaultDates.getTempban());
                 ps.executeUpdate();
 
                 try (ResultSet rs = ps.getGeneratedKeys()) {
