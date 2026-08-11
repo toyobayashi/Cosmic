@@ -33,7 +33,6 @@ public class GameConstants {
     private static final int[] jobUpgradeSpUp = {0, 1, 2, 3, 6};
     private final static Map<Integer, String> jobNames = new HashMap<>();
     private final static NumberFormat nfFormatter = new DecimalFormat("#,###,###,###");
-    private final static NumberFormat nfParser = NumberFormat.getInstance(YamlConfig.config.server.USE_UNITPRICE_WITH_COMMA ? Locale.FRANCE : Locale.UK);
 
     public static final Disease[] CPQ_DISEASES = {Disease.SLOW, Disease.SEDUCE, Disease.STUN, Disease.POISON,
             Disease.SEAL, Disease.DARKNESS, Disease.WEAKEN, Disease.CURSE};
@@ -642,8 +641,10 @@ public class GameConstants {
     }
 
     public synchronized static Number parseNumber(String value) {
+        NumberFormat parser = NumberFormat.getInstance(
+                YamlConfig.config.server.USE_UNITPRICE_WITH_COMMA ? Locale.FRANCE : Locale.UK);
         try {
-            return nfParser.parse(value);
+            return parser.parse(value);
         } catch (Exception e) {
             e.printStackTrace();
             return 0.0f;

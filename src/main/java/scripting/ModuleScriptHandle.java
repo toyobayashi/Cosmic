@@ -62,7 +62,15 @@ public final class ModuleScriptHandle implements ScriptHandle {
     private static ModuleScriptHandle load(Path entryPath, OutputStream out, OutputStream err) {
         Objects.requireNonNull(entryPath);
         Path realEntryPath = realPath(entryPath, entryPath);
-        NodeModuleGraph.Result moduleGraph = NodeModuleGraph.buildWithSourceMap(realEntryPath);
+        NodeModuleGraph.Result moduleGraph;
+        try {
+            moduleGraph = NodeModuleGraph.buildWithSourceMap(realEntryPath);
+        } catch (ScriptLoadException e) {
+            // toRealPath() can expand Windows 8.3 paths. Preserve the path
+            // supplied by the caller in the public load error as well.
+            throw new ScriptLoadException(
+                    "Failed to load module script " + entryPath + ": " + e.getMessage(), e);
+        }
         Path generatedEntryPath = moduleGraph.entryPath();
 
         Context context = Context.newBuilder("js")

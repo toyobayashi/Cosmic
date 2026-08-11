@@ -142,6 +142,9 @@ public abstract class AbstractScriptManager {
     }
 
     private static String cacheKey(Path scriptFile) {
-        return scriptFile.normalize().toString();
+        // Script handles are also addressed by script paths supplied by
+        // callers. Keep the cache key independent of the host path separator
+        // so a key written with '/' is identical on Windows and Unix.
+        return scriptFile.normalize().toString().replace('\\', '/');
     }
 }

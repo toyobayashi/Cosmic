@@ -3,6 +3,7 @@ package server.life;
 import config.YamlConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockitoAnnotations;
@@ -21,6 +22,7 @@ class MobSkillFactoryTest {
 
     @TempDir
     private Path wzPath;
+    private String previousWzPath;
 
     @BeforeAll
     static void loadConfig() {
@@ -29,9 +31,19 @@ class MobSkillFactoryTest {
 
     @BeforeEach
     void setWzPath() {
+        previousWzPath = System.getProperty("wz-path");
         MockitoAnnotations.openMocks(this);
         writeTestFileToTempDir();
         System.setProperty("wz-path", "%s/wz".formatted(wzPath.toString()));
+    }
+
+    @AfterEach
+    void restoreWzPath() {
+        if (previousWzPath == null) {
+            System.clearProperty("wz-path");
+        } else {
+            System.setProperty("wz-path", previousWzPath);
+        }
     }
 
     private void writeTestFileToTempDir() {

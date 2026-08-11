@@ -317,7 +317,8 @@ class ModuleScriptHandleTest {
                 """);
 
         try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
-            assertEquals("a/b/c.txt:example.txt", handle.invoke("result", ScriptInvocationContext.empty()));
+            assertEquals(Path.of("a", "b", "c.txt") + ":example.txt",
+                    handle.invoke("result", ScriptInvocationContext.empty()));
         }
     }
 
@@ -332,7 +333,8 @@ class ModuleScriptHandleTest {
                 """);
 
         try (ScriptHandle handle = ModuleScriptHandle.load(entry)) {
-            assertEquals("b/file.txt:.json", handle.invoke("result", ScriptInvocationContext.empty()));
+            assertEquals(Path.of("a", "..", "b", "file.txt").normalize() + ":.json",
+                    handle.invoke("result", ScriptInvocationContext.empty()));
         }
     }
 
